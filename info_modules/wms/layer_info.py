@@ -1,0 +1,207 @@
+import re
+import os
+import traceback
+from datetime import datetime, date
+from urllib.parse import urlencode
+
+from flask import json
+from flask_jwt_extended import create_access_token
+import requests
+from xml.dom.minidom import parseString
+
+
+QGIS_SERVER_URL = os.environ.get('QGIS_SERVER_URL',
+                                 'http://localhost:8001/ows/')
+
+
+def layer_info(layer, x, y, crs, params, identity, mapid, permitted_attributes,
+               attribute_aliases, attribute_formats, logger):
+    """Forward query to WMS server and return parsed info result.
+
+    :param str layer: Layer name
+    :param float x: X coordinate of query
+    :param float y: Y coordinate of query
+    :param str crs: CRS of query coordinates
+    :param obj params: FeatureInfo service params
+    :param str identity: User name or Identity dict
+    :param str mapid: WMS service map name
+    :param list(str) permitted_attributes: Ordered list of permitted attributes
+    :param obj attribute_aliases: Lookup for attribute aliases
+    :param obj attribute_formats: Lookup for attribute formats
+    :param Logger logger: Application logger
+    """
+    features = []
+
+    try:
+        # forward any authorization headers
+        headers = {}
+        access_token = create_access_token(identity)
+        if access_token:
+            headers['Authorization'] = "Bearer " + access_token
+
+        # forward WMS GetFeatureInfo request
+        wms_params = params.copy()
+        wms_params.pop('resolution', None)
+        wms_params.update({
+            'service': 'WMS',
+            'version': '1.3.0',
+            'request': 'GetFeatureInfo',
+            'info_format': 'text/xml',
+            'layers': layer,
+            'query_layers': layer
+        })
+        url = QGIS_SERVER_URL.rstrip("/") + "/" + mapid
+
+        logger.info(
+            "Forward WMS GetFeatureInfo request to %s?%s" %
+            (url, urlencode(wms_params))
+        )
+
+        response = requests.get(
+            url, params=wms_params, headers=headers, timeout=10
+        )
+
+        # parse GetFeatureInfo response
+        document = parseString(response.content.decode())
+        for layerEl in document.getElementsByTagName('Layer'):
+            featureEls = layerEl.getElementsByTagName("Feature")
+            if len(featureEls) > 0:
+                # vector layer
+                for featureEl in layerEl.getElementsByTagName('Feature'):
+                    feature_id = featureEl.getAttribute('id')
+                    attributes = []
+                    bbox = None
+                    geometry = None
+
+                    # parse attributes
+                    info_attributes = {}
+                    for attrEl in featureEl.getElementsByTagName('Attribute'):
+                        name = attrEl.getAttribute('name')
+                        if name in permitted_attributes:
+                            # add permitted attribute
+                            value = attrEl.getAttribute('value')
+                            if (name == 'geometry' and
+                                    attrEl.getAttribute('type') == 'derived'):
+                                geometry = value
+                            else:
+                                info_attributes[name] = value
+
+                    # add info attributes in order of permitted_attributes
+                    for attr in permitted_attributes:
+                        if attr in info_attributes:
+                            name = attribute_aliases.get(attr, attr)
+                            format = attribute_formats.get(name)
+                            value = info_attributes.get(attr)
+
+                            attributes.append({
+                                'name': name,
+                                'value': formatted_value(value, format, logger)
+                            })
+
+                    # parse bbox
+                    for bboxEl in featureEl.getElementsByTagName('BoundingBox'):
+                        bbox = [
+                            bboxEl.getAttribute('minx'),
+                            bboxEl.getAttribute('miny'),
+                            bboxEl.getAttribute('maxx'),
+                            bboxEl.getAttribute('maxy')
+                        ]
+                    if attributes:
+                        features.append({
+                            'id': feature_id,
+                            'attributes': attributes,
+                            'bbox': bbox,
+                            'geometry': geometry
+                        })
+            elif len(layerEl.getElementsByTagName('Attribute')) > 0:
+                # raster layer (no features)
+                attributes = []
+
+                # parse attributes
+                for attrEl in layerEl.getElementsByTagName('Attribute'):
+                    name = attrEl.getAttribute('name')
+                    name = attribute_aliases.get(name, name)
+                    format = attribute_formats.get(name)
+                    value = attrEl.getAttribute('value')
+
+                    attributes.append({
+                        'name': name,
+                        'value': formatted_value(value, format, logger)
+                    })
+
+                features.append({
+                    'attributes': attributes
+                })
+
+    except Exception as e:
+        msg = "Exception for layer '%s':\n%s" % (layer, traceback.format_exc())
+        logger.error(msg)
+        return {
+            'error': msg
+        }
+
+    return {
+        'features': features
+    }
+
+
+CONVERSION_RULES = [
+    (re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'),  # YYYY-MM-DDTHH:mm:ss
+     lambda m: datetime.strptime(m.group(0), '%Y-%m-%dT%H:%M:%S')),
+    (re.compile(r'^\d{4}-\d{2}-\d{2}$'),  # YYYY-MM-DD
+     lambda m: datetime.strptime(m.group(0), '%Y-%m-%d').date()),
+    (re.compile(r'^NULL$'), lambda m: None),  # NULL
+    # (r'^\d+$', lambda m: int(m.group(0))),  # Integer
+    # (r'^\d+\.\d+$', lambda m: float(m.group(0))),  # Float
+]
+
+
+def formatted_value(value, formatstr, logger):
+    # Detect types and convert value
+    for rule in CONVERSION_RULES:
+        match = rule[0].match(value)
+        if match:
+            value = rule[1](match)
+            break
+
+    # Convert value according to type spec in format
+    # https://docs.python.org/3.4/library/string.html#format-specification-mini-language
+    if formatstr and isinstance(value, str):
+        try:
+            typechar = formatstr[-1]
+            if typechar in 'bcdoxXn':
+                value = int(value)
+            elif typechar in 'eEfFgGn%':
+                value = float(value)
+        except Exception as e:
+            logger.warn("Error converting attribute with format '{}': {}"
+                        .format(formatstr, e))
+
+    # Add default formats for some types
+    if not formatstr:
+        if isinstance(value, date):
+            formatstr = "%d.%m.%Y"
+        elif isinstance(value, datetime):
+            formatstr = "%d.%m.%Y %H:%M:%S"
+
+    # Apply NULL value default format
+    if value is None:
+        value = '-'
+
+    # Return unformatted
+    if not formatstr:
+        return value
+
+    if formatstr.startswith('{'):
+        # JSON dict as lookup table
+        lookup = json.loads(formatstr)
+        out = lookup.get(value) or value
+    else:
+        try:
+            out = format(value, formatstr)
+        except Exception as e:
+            logger.warn("Error converting attribute with format '{}': {}"
+                        .format(formatstr, e))
+            out = value
+
+    return out
