@@ -5,6 +5,7 @@ from xml.dom.minidom import Document, Element, Text
 
 from jinja2 import Template, TemplateError, TemplateSyntaxError
 
+from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
 from info_modules.wms import layer_info as wms_layer_info
 from info_templates import default_info_template, layer_template
@@ -59,6 +60,7 @@ class FeatureInfoService():
             'default_wms_url', 'http://localhost:8001/ows/')
 
         self.resources = self.load_resources(config)
+        self.permissions_handler = PermissionsReader(tenant, logger)
 
     def query(self, identity, mapid, layers, params):
         """Query layers and return info result as XML.
@@ -68,8 +70,7 @@ class FeatureInfoService():
         :param list(str): List of query layer names
         :param obj params: FeatureInfo service params
         """
-        # TODO: filter by permissions
-        if not self.resources['maps'].get(mapid):
+        if not self.map_permitted(mapid, identity):
             # map unknown or not permitted
             return self.service_exception(
                 'MapNotDefined',
@@ -92,12 +93,9 @@ class FeatureInfoService():
         params['resolution'] = max(xres, yres)
         crs = params['crs']
 
-        # replace group layers with permitted sublayers
-        # TODO: filter layers by permissions; allow all for now
-        permitted_layers = (
-            list(self.resources['maps'][mapid]['layers'].keys()) +
-            list(self.resources['maps'][mapid]['group_layers'].keys())
-        )
+        # filter layers by permissions and replace group layers
+        # with permitted sublayers
+        permitted_layers = self.permitted_layers(mapid, identity)
         group_layers = self.resources['maps'][mapid]['group_layers']
         expanded_layers = self.expand_group_layers(
             layers, group_layers, permitted_layers
@@ -133,8 +131,8 @@ class FeatureInfoService():
 
     def expand_group_layers(self, requested_layers, group_layers,
                             permitted_layers):
-        """Recursively replace group layers with permitted sublayers and
-        return resulting layer list.
+        """Recursively filter layers by permissions and replace group layers
+        with permitted sublayers and return resulting layer list.
 
         :param list(str) requested_layers: List of requested layer names
         :param obj group_layers: Lookup for group layers with sublayers
@@ -143,19 +141,20 @@ class FeatureInfoService():
         expanded_layers = []
 
         for layer in requested_layers:
-            if layer in group_layers:
-                # expand sublayers
-                sublayers = []
-                for sublayer in group_layers.get(layer):
-                    if sublayer in permitted_layers:
-                        sublayers.append(sublayer)
+            if layer in permitted_layers:
+                if layer in group_layers:
+                    # expand sublayers
+                    sublayers = []
+                    for sublayer in group_layers.get(layer):
+                        if sublayer in permitted_layers:
+                            sublayers.append(sublayer)
 
-                expanded_layers += self.expand_group_layers(
-                    sublayers, group_layers, permitted_layers
-                )
-            elif layer in permitted_layers:
-                # leaf layer
-                expanded_layers.append(layer)
+                    expanded_layers += self.expand_group_layers(
+                        sublayers, group_layers, permitted_layers
+                    )
+                else:
+                    # leaf layer
+                    expanded_layers.append(layer)
 
         return expanded_layers
 
@@ -172,16 +171,26 @@ class FeatureInfoService():
         """
         # get layer config
         config = self.resources['maps'][mapid]['layers'][layer]
-        # TODO: filter by permissions
         layer_title = config.get('title')
         info_template = config.get('info_template')
-        permitted_attributes = config.get('attributes', [])
+        attributes = config.get('attributes', [])
         attribute_aliases = config.get('attribute_aliases', {})
         attribute_formats = config.get('attribute_formats', {})
         json_attribute_aliases = config.get('json_attribute_aliases', {})
         display_field = config.get('display_field')
         feature_report = config.get('feature_report')
         parent_facade = config.get('parent_facade')
+
+        # get layer permissions
+        layer_permissions = self.layer_permissions(mapid, layer, identity)
+
+        # filter by permissions
+        if not layer_permissions['info_template']:
+            info_template = None
+        permitted_attributes = [
+            attr for attr in attributes
+            if attr in layer_permissions['attributes']
+        ]
 
         if info_template is None:
             self.logger.info("No info template for layer '%s'" % layer)
@@ -441,3 +450,78 @@ class FeatureInfoService():
                 config['parent_facade'] = parent_group
 
             layers[layer['name']] = config
+
+    def map_permitted(self, mapid, identity):
+        """Return whether map is available and permitted.
+
+        :param str mapid: Map ID
+        :param obj identity: User identity
+        """
+        if self.resources['maps'].get(mapid):
+            # get permissions for map
+            map_permissions = self.permissions_handler.resource_permissions(
+                'maps', identity, mapid
+            )
+            if map_permissions:
+                return True
+
+        return False
+
+    def permitted_layers(self, mapid, identity):
+        """Return permitted layers for a map.
+
+        :param str mapid: Map ID
+        :param obj identity: User identity
+        """
+        # get available layers
+        available_layers = set(
+            list(self.resources['maps'][mapid]['layers'].keys()) +
+            list(self.resources['maps'][mapid]['group_layers'].keys())
+        )
+
+        # get permissions for map
+        map_permissions = self.permissions_handler.resource_permissions(
+            'maps', identity, mapid
+        )
+
+        # combine permissions
+        permitted_layers = set()
+        for permission in map_permissions:
+            # collect available and permitted layers
+            layers = [
+                layer['name'] for layer in permission['layers']
+                if layer['name'] in available_layers
+            ]
+            permitted_layers.update(layers)
+
+        # return sorted layers
+        return sorted(list(permitted_layers))
+
+    def layer_permissions(self, mapid, layer, identity):
+        """Return permitted layer attributes and info template.
+
+        :param str mapid: Map ID
+        :param str layer: Layer name
+        :param obj identity: User identity
+        """
+        # get permissions for map
+        map_permissions = self.permissions_handler.resource_permissions(
+            'maps', identity, mapid
+        )
+
+        # combine permissions
+        permitted_attributes = set()
+        info_template_permitted = False
+        for permission in map_permissions:
+            # find requested layer
+            for l in permission['layers']:
+                if l['name'] == layer:
+                    # found matching layer
+                    permitted_attributes.update(l.get('attributes', []))
+                    info_template_permitted |= l.get('info_template', False)
+                    break
+
+        return {
+            'attributes': sorted(list(permitted_attributes)),
+            'info_template': info_template_permitted
+        }

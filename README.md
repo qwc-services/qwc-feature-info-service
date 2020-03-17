@@ -125,6 +125,62 @@ Example:
 }
 ```
 
+### Permissions
+
+* File location: `$CONFIG_PATH/<tenant>/permissions.json`
+
+Example:
+```json
+{
+  "users": [
+    {
+      "name": "demo",
+      "groups": ["demo"],
+      "roles": []
+    }
+  ],
+  "groups": [
+    {
+      "name": "demo",
+      "roles": ["demo"]
+    }
+  ],
+  "roles": [
+    {
+      "role": "public",
+      "permissions": {
+        "maps": [
+          {
+            "name": "qwc_demo",
+            "ows_type": "WMS",
+            "layers": [
+              {
+                "name": "qwc_demo"
+              },
+              {
+                "name": "edit_demo"
+              },
+              {
+                "name": "edit_points",
+                "attributes": [
+                  "id", "name", "description", "num", "value", "type", "amount", "validated",
+                  "datetime", "geometry", "maptip"
+                ]
+              },
+              {
+                "name": "countries",
+                "attributes": ["id", "name", "formal_en", "pop_est", "subregion", "geometry"],
+                "info_template": true
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
+```
+
 
 ## HTML template
 
@@ -287,7 +343,7 @@ Service API:
 
 Sample request:
 
-    curl 'http://localhost:5015/qwc_demo?layers=countries,edit_lines&i=51&j=51&height=101&width=101&bbox=671639%2C5694018%2C1244689%2C6267068&crs=EPSG%3A3857'
+    curl 'http://localhost:5015/qwc_demo?layers=countries,edit_points&i=51&j=51&height=101&width=101&bbox=671639%2C5694018%2C1244689%2C6267068&crs=EPSG%3A3857'
 
 
 Development
