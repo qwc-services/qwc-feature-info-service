@@ -28,6 +28,7 @@ Example:
 {
   "service": "feature-info",
   "config": {
+    "default_wms_url": "http://localhost:8001/ows/"
   },
   "resources": {
     "maps": [
@@ -112,6 +113,7 @@ Example:
               "display_field": "name",
               "info_template": {
                 "type": "wms",
+                "wms_url": "http://localhost:8001/ows/qwc_demo",
                 "template": "<div><h2>Demo Template</h2>Pos: {{ x }}, {{ y }}<br>Name: {{ feature.Name }}</div>"
               }
             }

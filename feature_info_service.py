@@ -1,5 +1,6 @@
 import html
 import re
+from urllib.parse import urljoin
 from xml.dom.minidom import Document, Element, Text
 
 from jinja2 import Template, TemplateError, TemplateSyntaxError
@@ -54,6 +55,8 @@ class FeatureInfoService():
 
         self.default_info_template = config.get(
             'default_info_template', default_info_template)
+        self.default_wms_url = config.get(
+            'default_wms_url', 'http://localhost:8001/ows/')
 
         self.resources = self.load_resources(config)
 
@@ -201,8 +204,14 @@ class FeatureInfoService():
         info_type = info_template.get('type')
         if info_type == 'wms':
             # WMS GetFeatureInfo
+            if info_template.get('wms_url'):
+                # use layer specific WMS
+                wms_url = info_template.get('wms_url')
+            else:
+                # use default WMS
+                wms_url = urljoin(self.default_wms_url, mapid)
             info = wms_layer_info(
-                layer, x, y, crs, params, identity, mapid,
+                layer, x, y, crs, params, identity, wms_url,
                 permitted_attributes, attribute_aliases, attribute_formats,
                 self.logger
             )

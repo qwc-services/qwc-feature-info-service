@@ -10,12 +10,9 @@ import requests
 from xml.dom.minidom import parseString
 
 
-QGIS_SERVER_URL = os.environ.get('QGIS_SERVER_URL',
-                                 'http://localhost:8001/ows/')
-
-
-def layer_info(layer, x, y, crs, params, identity, mapid, permitted_attributes,
-               attribute_aliases, attribute_formats, logger):
+def layer_info(layer, x, y, crs, params, identity, wms_url,
+               permitted_attributes, attribute_aliases, attribute_formats,
+               logger):
     """Forward query to WMS server and return parsed info result.
 
     :param str layer: Layer name
@@ -24,7 +21,7 @@ def layer_info(layer, x, y, crs, params, identity, mapid, permitted_attributes,
     :param str crs: CRS of query coordinates
     :param obj params: FeatureInfo service params
     :param str identity: User name or Identity dict
-    :param str mapid: WMS service map name
+    :param str wms_url: WMS URL
     :param list(str) permitted_attributes: Ordered list of permitted attributes
     :param obj attribute_aliases: Lookup for attribute aliases
     :param obj attribute_formats: Lookup for attribute formats
@@ -50,15 +47,14 @@ def layer_info(layer, x, y, crs, params, identity, mapid, permitted_attributes,
             'layers': layer,
             'query_layers': layer
         })
-        url = QGIS_SERVER_URL.rstrip("/") + "/" + mapid
 
         logger.info(
             "Forward WMS GetFeatureInfo request to %s?%s" %
-            (url, urlencode(wms_params))
+            (wms_url, urlencode(wms_params))
         )
 
         response = requests.get(
-            url, params=wms_params, headers=headers, timeout=10
+            wms_url, params=wms_params, headers=headers, timeout=10
         )
 
         # parse GetFeatureInfo response
