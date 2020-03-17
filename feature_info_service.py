@@ -4,6 +4,7 @@ from xml.dom.minidom import Document, Element, Text
 
 from jinja2 import Template, TemplateError, TemplateSyntaxError
 
+from qwc_services_core.runtime_config import RuntimeConfig
 from info_modules.wms import layer_info as wms_layer_info
 from info_templates import default_info_template, layer_template
 
@@ -48,6 +49,14 @@ class FeatureInfoService():
         self.tenant = tenant
         self.logger = logger
 
+        config_handler = RuntimeConfig("featureInfo", logger)
+        config = config_handler.tenant_config(tenant)
+
+        self.default_info_template = config.get(
+            'default_info_template', default_info_template)
+
+        self.resources = self.load_resources(config)
+
     def query(self, identity, mapid, layers, params):
         """Query layers and return info result as XML.
 
@@ -56,6 +65,13 @@ class FeatureInfoService():
         :param list(str): List of query layer names
         :param obj params: FeatureInfo service params
         """
+        # TODO: filter by permissions
+        if not self.resources['maps'].get(mapid):
+            # map unknown or not permitted
+            return self.service_exception(
+                'MapNotDefined',
+                'Map "%s" does not exist or is not permitted' % mapid
+            )
 
         # calculate query coordinates and resolutions
         try:
@@ -73,11 +89,20 @@ class FeatureInfoService():
         params['resolution'] = max(xres, yres)
         crs = params['crs']
 
-        # TODO: filter layers by permissions
+        # replace group layers with permitted sublayers
+        # TODO: filter layers by permissions; allow all for now
+        permitted_layers = (
+            list(self.resources['maps'][mapid]['layers'].keys()) +
+            list(self.resources['maps'][mapid]['group_layers'].keys())
+        )
+        group_layers = self.resources['maps'][mapid]['group_layers']
+        expanded_layers = self.expand_group_layers(
+            layers, group_layers, permitted_layers
+        )
 
         # collect layer infos
         layer_infos = []
-        for layer in layers:
+        for layer in expanded_layers:
             info = self.get_layer_info(
                 identity, mapid, layer, x, y, crs, params
             )
@@ -90,6 +115,47 @@ class FeatureInfoService():
         )
         return info_xml
 
+    def service_exception(self, code, message):
+        """Create ServiceExceptionReport XML
+
+        :param str code: ServiceException code
+        :param str message: ServiceException text
+        """
+        return (
+            '<ServiceExceptionReport version="1.3.0">\n'
+            ' <ServiceException code="%s">%s</ServiceException>\n'
+            '</ServiceExceptionReport>'
+            % (code, message)
+        )
+
+    def expand_group_layers(self, requested_layers, group_layers,
+                            permitted_layers):
+        """Recursively replace group layers with permitted sublayers and
+        return resulting layer list.
+
+        :param list(str) requested_layers: List of requested layer names
+        :param obj group_layers: Lookup for group layers with sublayers
+        :param list(str) permitted_layers: List of permitted layer names
+        """
+        expanded_layers = []
+
+        for layer in requested_layers:
+            if layer in group_layers:
+                # expand sublayers
+                sublayers = []
+                for sublayer in group_layers.get(layer):
+                    if sublayer in permitted_layers:
+                        sublayers.append(sublayer)
+
+                expanded_layers += self.expand_group_layers(
+                    sublayers, group_layers, permitted_layers
+                )
+            elif layer in permitted_layers:
+                # leaf layer
+                expanded_layers.append(layer)
+
+        return expanded_layers
+
     def get_layer_info(self, identity, mapid, layer, x, y, crs, params):
         """Get info for a layer rendered as info template.
 
@@ -101,26 +167,32 @@ class FeatureInfoService():
         :param str crs: CRS of query coordinates
         :param obj params: FeatureInfo service params
         """
-
-        # TODO: from config
+        # get layer config
+        config = self.resources['maps'][mapid]['layers'][layer]
         # TODO: filter by permissions
-        layer_title = None
-        info_template = None
-        display_field = None
-        feature_report = None
-        parent_facade = None
-        permitted_attributes = ['name', 'formal_en', 'pop_est', 'subregion']
-        attribute_aliases = {}
-        attribute_formats = {}
-        json_attribute_aliases = {}
+        layer_title = config.get('title')
+        info_template = config.get('info_template')
+        permitted_attributes = config.get('attributes', [])
+        attribute_aliases = config.get('attribute_aliases', {})
+        attribute_formats = config.get('attribute_formats', {})
+        json_attribute_aliases = config.get('json_attribute_aliases', {})
+        display_field = config.get('display_field')
+        feature_report = config.get('feature_report')
+        parent_facade = config.get('parent_facade')
 
         if info_template is None:
-            self.logger.warning("No info template for layer '%s'" % layer)
+            self.logger.info("No info template for layer '%s'" % layer)
             # fallback to WMS GetFeatureInfo with default info template
             info_template = {
-                'template': default_info_template,
+                'template': self.default_info_template,
                 'type': 'wms'
             }
+        elif not info_template.get('template'):
+            self.logger.info(
+                "Empty template in info template for layer '%s'" % layer
+            )
+            # use default info template if not specified in config
+            info_template['template'] = self.default_info_template
 
         info = None
         error_msg = None
@@ -273,3 +345,82 @@ class FeatureInfoService():
         text.data = info_html
         el.appendChild(text)
         return el.toxml()
+
+    def load_resources(self, config):
+        """Load service resources from config.
+
+        :param RuntimeConfig config: Config handler
+        """
+        maps = {}
+
+        # collect service resources
+        for map_obj in config.resources().get('maps', []):
+            # collect map layers
+            layers = {}
+            group_layers = {}
+            self.collect_layers(map_obj['root_layer'], layers, group_layers)
+
+            maps[map_obj['name']] = {
+                'layers': layers,
+                'group_layers': group_layers
+            }
+
+        return {
+            'maps': maps
+        }
+
+    def collect_layers(self, layer, layers, group_layers):
+        """Recursively collect layer info for layer subtree from config.
+
+        :param obj layer: Layer or group layer
+        :param obj layers: Partial lookup for layer configs
+        :param obj group_layers: Partial lookup for group layer configs
+        """
+        if layer.get('layers'):
+            # group layer
+
+            # collect sub layers
+            sublayers = []
+            for sublayer in layer['layers']:
+                sublayers.append(sublayer['name'])
+                # recursively collect sub layer
+                self.collect_layers(sublayer, layers, group_layers)
+
+            group_layers[layer['name']] = sublayers
+        else:
+            # layer
+
+            # collect attributes config
+            attributes = []
+            attribute_aliases = {}
+            attribute_formats = {}
+            json_aliases = {}
+            for attr in layer['attributes']:
+                attributes.append(attr['name'])
+                if attr.get('alias'):
+                    attribute_aliases[attr['name']] = attr['alias']
+                if attr.get('format'):
+                    attribute_formats[attr['name']] = attr['format']
+                if attr.get('json_attribute_aliases'):
+                    json_aliases[attr['name']] = attr['json_attribute_aliases']
+
+            # add layer config
+            config = {
+                'title': layer.get('title', layer['name']),
+                'attributes': attributes
+            }
+            if layer.get('info_template'):
+                config['info_template'] = layer.get('info_template')
+            if attribute_aliases:
+                config['attribute_aliases'] = attribute_aliases
+            if attribute_formats:
+                config['attribute_formats'] = attribute_formats
+            if json_aliases:
+                config['json_attribute_aliases'] = json_aliases
+            if layer.get('display_field'):
+                config['display_field'] = layer.get('display_field')
+            if layer.get('feature_report'):
+                config['feature_report'] = layer.get('feature_report')
+            # TODO: parent_facade
+
+            layers[layer['name']] = config

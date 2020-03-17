@@ -39,7 +39,7 @@ def info_service_handler(identity):
     handler = tenant_handler.handler('featureInfo', 'info', tenant)
     if handler is None:
         handler = tenant_handler.register_handler(
-            'featureInfo', tenant, FeatureInfoService(tenant, app.logger))
+            'info', tenant, FeatureInfoService(tenant, app.logger))
     return handler
 
 
