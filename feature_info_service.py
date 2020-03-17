@@ -378,22 +378,29 @@ class FeatureInfoService():
             'maps': maps
         }
 
-    def collect_layers(self, layer, layers, group_layers):
+    def collect_layers(self, layer, layers, group_layers, parent_group=None):
         """Recursively collect layer info for layer subtree from config.
 
         :param obj layer: Layer or group layer
         :param obj layers: Partial lookup for layer configs
         :param obj group_layers: Partial lookup for group layer configs
+        :param str parent_group: Name of visible parent group if sublayers are
+                                 hidden
         """
         if layer.get('layers'):
             # group layer
+
+            if layer.get('hide_sublayers', False) and parent_group is None:
+                parent_group = layer['name']
 
             # collect sub layers
             sublayers = []
             for sublayer in layer['layers']:
                 sublayers.append(sublayer['name'])
                 # recursively collect sub layer
-                self.collect_layers(sublayer, layers, group_layers)
+                self.collect_layers(
+                    sublayer, layers, group_layers, parent_group
+                )
 
             group_layers[layer['name']] = sublayers
         else:
@@ -404,7 +411,7 @@ class FeatureInfoService():
             attribute_aliases = {}
             attribute_formats = {}
             json_aliases = {}
-            for attr in layer['attributes']:
+            for attr in layer.get('attributes', []):
                 attributes.append(attr['name'])
                 if attr.get('alias'):
                     attribute_aliases[attr['name']] = attr['alias']
@@ -430,6 +437,7 @@ class FeatureInfoService():
                 config['display_field'] = layer.get('display_field')
             if layer.get('feature_report'):
                 config['feature_report'] = layer.get('feature_report')
-            # TODO: parent_facade
+            if parent_group:
+                config['parent_facade'] = parent_group
 
             layers[layer['name']] = config
