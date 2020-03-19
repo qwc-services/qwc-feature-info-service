@@ -1,12 +1,17 @@
+from collections import OrderedDict
 import html
 import re
 from urllib.parse import urljoin
 from xml.dom.minidom import Document, Element, Text
 
+from flask import json
 from jinja2 import Template, TemplateError, TemplateSyntaxError
 
+from qwc_services_core.database import DatabaseEngine
 from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
+
+from info_modules.sql import layer_info as sql_layer_info
 from info_modules.wms import layer_info as wms_layer_info
 from info_templates import default_info_template, layer_template
 
@@ -61,6 +66,8 @@ class FeatureInfoService():
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
+
+        self.db_engine = DatabaseEngine()
 
     def query(self, identity, mapid, layers, params):
         """Query layers and return info result as XML.
@@ -224,6 +231,14 @@ class FeatureInfoService():
                 permitted_attributes, attribute_aliases, attribute_formats,
                 self.logger
             )
+        elif info_type == 'sql':
+            # DB query
+            database = info_template.get('database')
+            sql = info_template.get('sql')
+            info = sql_layer_info(
+                layer, x, y, crs, params, identity, self.db_engine, database,
+                sql, self.logger
+            )
 
         if info is None or not isinstance(info, dict):
             # info result failed or not a dict
@@ -312,7 +327,7 @@ class FeatureInfoService():
         )
 
     def parse_value(self, value):
-        """Parse info result value and convert to dict if JSON.
+        """Parse info result value and convert to dict or list if JSON.
 
         :param obj value: Info value
         """

@@ -7,9 +7,35 @@ The query is handled for each layer by its layer info provider configured in the
 
 Layer info providers:
 
-* WMS GetFeatureInfo: forward info request to the QGIS Server
+* WMS GetFeatureInfo (default): forward info request to the QGIS Server
+* DB Query: execute custom query SQL
 
 The info results are each rendered into customizable HTML templates and returned as a GetFeatureInfoResponse XML.
+
+
+Setup
+-----
+
+The DB query uses a PostgreSQL connection service or connection to a PostGIS database.
+This connection's user requires read access to the configured tables.
+
+### qwc_demo example
+
+Uses PostgreSQL connection service `qwc_geodb` (GeoDB).
+The user `qwc_service` requires read access to the configured tables
+of the data layers from the QGIS project `qwc_demo.qgs`.
+
+Setup PostgreSQL connection service file `~/.pg_service.conf`:
+
+```
+[qwc_geodb]
+host=localhost
+port=5439
+dbname=qwc_demo
+user=qwc_service
+password=qwc_service
+sslmode=disable
+```
 
 
 Configuration
@@ -124,6 +150,26 @@ Example:
   }
 }
 ```
+
+Example `info_template` for WMS GetFeatureInfo:
+```json
+"info_template": {
+  "type": "wms",
+  "wms_url": "http://localhost:8001/ows/qwc_demo",
+  "template": "<div><h2>Demo Template</h2>Pos: {{ x }}, {{ y }}<br>Name: {{ feature.Name }}</div>"
+}
+```
+
+Example `info_template` for DB query:
+```json
+"info_template": {
+  "type": "sql",
+  "database": "postgresql:///?service=qwc_geodb",
+  "sql": "SELECT ogc_fid as _fid_, name, formal_en, pop_est, subregion, ST_AsText(wkb_geometry) as wkt_geom FROM qwc_geodb.ne_10m_admin_0_countries WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('POINT(:x :y)', :srid)) LIMIT :feature_count;",
+  "template": "<div><h2>Demo Template</h2>Pos: {{ x }}, {{ y }}<br>Name: {{ feature.Name }}</div>"
+}
+```
+
 
 ### Permissions
 
@@ -325,6 +371,55 @@ Default info template:
         {%- endfor %}
         </tbody>
     </table>
+```
+
+
+DB Query
+--------
+
+In a DB Query the following values are replaced in the SQL:
+
+* `:x`: X coordinate of query
+* `:y`: Y coordinate of query
+* `:srid`: SRID of query coordinates
+* `:resolution`: Resolution in map units per pixel
+* `:FI_POINT_TOLERANCE`: Tolerance for picking points, in pixels (default=16)
+* `:FI_LINE_TOLERANCE`: Tolerance for picking lines, in pixels (default=8)
+* `:FI_POLYGON_TOLERANCE`: Tolerance for picking polygons, in pixels (default=4)
+* `:i`: X ordinate of query point on map, in pixels
+* `:j`: Y ordinate of query point on map, in pixels
+* `:height`: Height of map output, in pixels
+* `:width`: Width of map output, in pixels
+* `:bbox`: 'Bounding box for map extent as minx,miny,maxx,maxy'
+* `:crs`: 'CRS for map extent'
+* `:feature_count`: Max feature count
+* `:with_geometry`: Whether to return geometries in response (default=1)
+* `:with_maptip`: Whether to return maptip in response (default=1)
+
+The query may return the feature ID as `_fid_` and the WKT geometry as `wkt_geom`. All other selected columns are used as feature attributes.
+
+Sample queries:
+
+```sql
+    SELECT ogc_fid as _fid_, name, ...,
+      ST_AsText(wkb_geometry) as wkt_geom
+    FROM schema.table
+    WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('POINT(:x :y)', :srid))
+    LIMIT :feature_count;
+```
+
+```sql
+    SELECT ogc_fid as _fid_, name, ...,
+      ST_AsText(wkb_geometry) as wkt_geom
+    FROM schema.table
+    WHERE ST_Intersects(
+        wkb_geometry,
+        ST_Buffer(
+            ST_GeomFromText('POINT(:x :y)', :srid),
+            :resolution * :FI_POLYGON_TOLERANCE
+        )
+    )
+    LIMIT :feature_count;
 ```
 
 
