@@ -9,6 +9,7 @@ Layer info providers:
 
 * WMS GetFeatureInfo (default): forward info request to the QGIS Server
 * DB Query: execute custom query SQL
+* Custom info module: custom Python modules returning layer info
 
 The info results are each rendered into customizable HTML templates and returned as a GetFeatureInfoResponse XML.
 
@@ -166,6 +167,15 @@ Example `info_template` for DB query:
   "type": "sql",
   "database": "postgresql:///?service=qwc_geodb",
   "sql": "SELECT ogc_fid as _fid_, name, formal_en, pop_est, subregion, ST_AsText(wkb_geometry) as wkt_geom FROM qwc_geodb.ne_10m_admin_0_countries WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('POINT(:x :y)', :srid)) LIMIT :feature_count;",
+  "template": "<div><h2>Demo Template</h2>Pos: {{ x }}, {{ y }}<br>Name: {{ feature.Name }}</div>"
+}
+```
+
+Example `info_template` for Custom info module:
+```json
+"info_template": {
+  "type": "module",
+  "module": "example",
   "template": "<div><h2>Demo Template</h2>Pos: {{ x }}, {{ y }}<br>Name: {{ feature.Name }}</div>"
 }
 ```
@@ -421,6 +431,68 @@ Sample queries:
     )
     LIMIT :feature_count;
 ```
+
+
+Custom info modules
+-------------------
+
+Custom info modules can be placed in `./info_modules/custom/<module name>/` and must provide the following method:
+```python
+def layer_info(layer, x, y, crs, params, identity)
+```
+
+Input parameters:
+
+* `layer` (str): Layer name
+* `x` (float): X coordinate of query
+* `y` (float): Y coordinate of query
+* `crs` (str): CRS of query coordinates
+* `params` (obj): FeatureInfo service params
+
+        {
+            'i': <X ordinate of query point on map, in pixels>,
+            'j': <Y ordinate of query point on map, in pixels>,
+            'height': <Height of map output, in pixels>,
+            'width': <Width of map output, in pixels>,
+            'bbox': '<Bounding box for map extent as minx,miny,maxx,maxy>',
+            'crs': '<CRS for map extent>',
+            'feature_count': <Max feature count>,
+            'with_geometry': <Whether to return geometries in response
+                (default=1)>,
+            'with_maptip': <Whether to return maptip in response
+                (default=1)>,
+            'FI_POINT_TOLERANCE': <Tolerance for picking points, in pixels
+                (default=16)>,
+            'FI_LINE_TOLERANCE': <Tolerance for picking lines, in pixels
+                (default=8)>,
+            'FI_POLYGON_TOLERANCE': <Tolerance for picking polygons, in pixels
+                (default=4)>,
+            'resolution': <Resolution in map units per pixel>
+        }
+
+* `identity` (str): User name or Identity dict
+
+Return info result as a dict:
+
+    {
+        'features': [
+            {
+                'id': <feature ID>,  # optional
+                'attributes': [
+                    {
+                        'name': '<attribute name>',
+                        'value': <attribute value>
+                    }
+                ],
+                'bbox': [<minx>, <miny>, <maxx>, <maxy>],  # optional
+                'geometry': '<WKT geometry>'  # optional
+            }
+        ]
+    }
+
+See [`./info_modules/custom/example/`](info_modules/custom/example/) for a sample implementation of a custom layer info module.
+
+The custom info module can then be referenced in the `info_template` by its name (= directory name) in the service config.
 
 
 Usage

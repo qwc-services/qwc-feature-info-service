@@ -1,6 +1,8 @@
 from collections import OrderedDict
 import html
+from importlib import import_module
 import re
+import traceback
 from urllib.parse import urljoin
 from xml.dom.minidom import Document, Element, Text
 
@@ -216,7 +218,6 @@ class FeatureInfoService():
         info = None
         error_msg = None
 
-        # TODO: other info types
         info_type = info_template.get('type')
         if info_type == 'wms':
             # WMS GetFeatureInfo
@@ -239,6 +240,31 @@ class FeatureInfoService():
                 layer, x, y, crs, params, identity, self.db_engine, database,
                 sql, self.logger
             )
+        elif info_type == 'module':
+            # custom module
+            try:
+                # import custom layer info method
+                module_name = info_template.get('module')
+                custom_module = import_module(
+                    'info_modules.custom.%s' % module_name
+                )
+                layer_info = getattr(custom_module, 'layer_info')
+
+                # call layer info
+                info = layer_info(layer, x, y, crs, params, identity)
+            except ImportError as e:
+                error_msg = "ImportError for layer '%s': %s" % (layer, e)
+            except AttributeError as e:
+                error_msg = "AttributeError for layer '%s': %s" % (layer, e)
+            except Exception as e:
+                error_msg = (
+                    "Exception in custom info module '%s' "
+                    "for layer '%s':\n%s" %
+                    (module_name, layer, traceback.format_exc())
+                )
+            if error_msg is not None:
+                self.logger.error(error_msg)
+                info = {'error': error_msg}
 
         if info is None or not isinstance(info, dict):
             # info result failed or not a dict
