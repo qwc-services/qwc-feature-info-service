@@ -1,5 +1,5 @@
-FeatureInfo Service
-===================
+QWC FeatureInfo Service
+=======================
 
 Query layers at a geographic position using an API based on WMS GetFeatureInfo.
 
@@ -48,6 +48,7 @@ e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 
 ### FeatureInfo Service config
 
+* [JSON schema](schemas/qwc-feature-info-service.json)
 * File location: `$CONFIG_PATH/<tenant>/featureInfoConfig.json`
 
 Example:

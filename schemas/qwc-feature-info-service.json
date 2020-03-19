@@ -1,0 +1,172 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/qwc-services/qwc-feature-info-service/master/schemas/qwc-feature-info-service.json",
+  "title": "QWC FeatureInfo Service",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "title": "JSON Schema",
+      "description": "Reference to JSON schema of this config",
+      "type": "string",
+      "format": "uri",
+      "default": "https://raw.githubusercontent.com/qwc-services/qwc-feature-info-service/master/schemas/qwc-feature-info-service.json"
+    },
+    "service": {
+      "title": "Service name",
+      "type": "string",
+      "const": "feature-info"
+    },
+    "config": {
+      "title": "Config options",
+      "type": "object",
+      "properties": {
+        "default_info_template": {
+          "description": "Default HTML info template",
+          "type": "string"
+        },
+        "default_wms_url": {
+          "description": "Default WMS URL for WMS GetFeatureInfo queries",
+          "type": "string"
+        }
+      }
+    },
+    "resources": {
+      "title": "Resources",
+      "type": "object",
+      "properties": {
+        "maps": {
+          "title": "Maps",
+          "type": "array",
+          "items": {
+            "title": "Map",
+            "description": "Map with nested layers and group layers",
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "root_layer": {
+                "description": "Root layer of map",
+                "$ref": "#/definitions/layer"
+              }
+            },
+            "required": [
+              "name",
+              "root_layer"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "required": [
+    "service",
+    "config",
+    "resources"
+  ],
+  "definitions": {
+    "layer": {
+      "title": "Layer",
+      "description": "Layer or group layer",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "title": {
+          "description": "Layer title",
+          "type": "string"
+        },
+        "attributes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "alias": {
+                "type": "string"
+              },
+              "format": {
+                "description": "Formatting expression for converting attribute values",
+                "type": "string"
+              },
+              "json_attribute_aliases": {
+                "title": "JSON attribute aliases",
+                "description": "Aliases for attributes in JSON values as key-value pairs `{<JSON attr>: <alias>}`",
+                "type": "object",
+                "additionalProperties": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        },
+        "info_template": {
+          "title": "Info template",
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "wms",
+                "sql",
+                "module"
+              ]
+            },
+            "template": {
+              "description": "HTML template for info result",
+              "type": "string"
+            },
+            "wms_url": {
+              "description": "Custom WMS URL (WMS GetFeatureInfo only)",
+              "type": "string"
+            },
+            "database": {
+              "description": "Database connection string (DB Query only)",
+              "type": "string"
+            },
+            "sql": {
+              "description": "Query SQL (DB Query only)",
+              "type": "string"
+            },
+            "module": {
+              "description": "Custom info module name (Custom info module only)",
+              "type": "string"
+            }
+          },
+          "required": [
+            "type"
+          ]
+        },
+        "display_field": {
+          "title": "Display field",
+          "description": "Show value of this attribute in feature result header",
+          "type": "string"
+        },
+        "feature_report": {
+          "title": "Feature report",
+          "description": "Name of corresponding feature report",
+          "type": "string"
+        },
+        "layers": {
+          "description": "Sublayers of this group layer",
+          "type": "array",
+          "items": { "$ref": "#/definitions/layer" }
+        },
+        "hide_sublayers": {
+          "title": "Hide sublayers",
+          "description": "Hide sublayers of this group layer if set, to make the group layer look like a regular layer",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "name"
+      ]
+    }
+  }
+}
