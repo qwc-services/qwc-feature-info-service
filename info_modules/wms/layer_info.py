@@ -12,7 +12,7 @@ from xml.dom.minidom import parseString
 
 def layer_info(layer, x, y, crs, params, identity, wms_url,
                permitted_attributes, attribute_aliases, attribute_formats,
-               logger):
+               forward_auth_headers, logger):
     """Forward query to WMS server and return parsed info result.
 
     :param str layer: Layer name
@@ -25,16 +25,18 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
     :param list(str) permitted_attributes: Ordered list of permitted attributes
     :param obj attribute_aliases: Lookup for attribute aliases
     :param obj attribute_formats: Lookup for attribute formats
+    :param bool forward_auth_headers: Whether to forward authorization headers
     :param Logger logger: Application logger
     """
     features = []
 
     try:
-        # forward any authorization headers
         headers = {}
-        access_token = create_access_token(identity)
-        if access_token:
-            headers['Authorization'] = "Bearer " + access_token
+        if forward_auth_headers:
+            # forward any authorization headers
+            access_token = create_access_token(identity)
+            if access_token:
+                headers['Authorization'] = "Bearer " + access_token
 
         # forward WMS GetFeatureInfo request
         wms_params = params.copy()

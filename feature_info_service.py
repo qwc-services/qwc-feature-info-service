@@ -221,16 +221,18 @@ class FeatureInfoService():
         info_type = info_template.get('type')
         if info_type == 'wms':
             # WMS GetFeatureInfo
+            forward_auth_headers = False
             if info_template.get('wms_url'):
                 # use layer specific WMS
                 wms_url = info_template.get('wms_url')
             else:
                 # use default WMS
                 wms_url = urljoin(self.default_wms_url, mapid)
+                forward_auth_headers = True
             info = wms_layer_info(
                 layer, x, y, crs, params, identity, wms_url,
                 permitted_attributes, attribute_aliases, attribute_formats,
-                self.logger
+                forward_auth_headers, self.logger
             )
         elif info_type == 'sql':
             # DB query
