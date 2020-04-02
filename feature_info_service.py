@@ -79,7 +79,7 @@ class FeatureInfoService():
         :param list(str): List of query layer names
         :param obj params: FeatureInfo service params
         """
-        if not self.map_permitted(mapid, identity):
+        if not self.wms_permitted(mapid, identity):
             # map unknown or not permitted
             return self.service_exception(
                 'MapNotDefined',
@@ -494,18 +494,18 @@ class FeatureInfoService():
 
             layers[layer['name']] = config
 
-    def map_permitted(self, mapid, identity):
-        """Return whether map is available and permitted.
+    def wms_permitted(self, mapid, identity):
+        """Return whether WMS is available and permitted.
 
         :param str mapid: Map ID
         :param obj identity: User identity
         """
         if self.resources['wms_services'].get(mapid):
-            # get permissions for map
-            map_permissions = self.permissions_handler.resource_permissions(
-                'maps', identity, mapid
+            # get permissions for WMS
+            wms_permissions = self.permissions_handler.resource_permissions(
+                'wms_services', identity, mapid
             )
-            if map_permissions:
+            if wms_permissions:
                 return True
 
         return False
@@ -524,14 +524,14 @@ class FeatureInfoService():
             list(wms_resources['group_layers'].keys())
         )
 
-        # get permissions for map
-        map_permissions = self.permissions_handler.resource_permissions(
-            'maps', identity, mapid
+        # get permissions for WMS
+        wms_permissions = self.permissions_handler.resource_permissions(
+            'wms_services', identity, mapid
         )
 
         # combine permissions
         permitted_layers = set()
-        for permission in map_permissions:
+        for permission in wms_permissions:
             # collect available and permitted layers
             layers = [
                 layer['name'] for layer in permission['layers']
@@ -549,15 +549,15 @@ class FeatureInfoService():
         :param str layer: Layer name
         :param obj identity: User identity
         """
-        # get permissions for map
-        map_permissions = self.permissions_handler.resource_permissions(
-            'maps', identity, mapid
+        # get permissions for WMS
+        wms_permissions = self.permissions_handler.resource_permissions(
+            'wms_services', identity, mapid
         )
 
         # combine permissions
         permitted_attributes = set()
         info_template_permitted = False
-        for permission in map_permissions:
+        for permission in wms_permissions:
             # find requested layer
             for l in permission['layers']:
                 if l['name'] == layer:

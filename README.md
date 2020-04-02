@@ -204,7 +204,7 @@ Example:
     {
       "role": "public",
       "permissions": {
-        "maps": [
+        "wms_services": [
           {
             "name": "qwc_demo",
             "ows_type": "WMS",
@@ -224,7 +224,7 @@ Example:
               },
               {
                 "name": "countries",
-                "attributes": ["id", "name", "formal_en", "pop_est", "subregion", "geometry"],
+                "attributes": ["name", "formal_en", "pop_est", "subregion", "geometry"],
                 "info_template": true
               }
             ]
