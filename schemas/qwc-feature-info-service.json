@@ -94,10 +94,22 @@
               },
               "json_attribute_aliases": {
                 "title": "JSON attribute aliases",
-                "description": "Aliases for attributes in JSON values as key-value pairs `{<JSON attr>: <alias>}`",
-                "type": "object",
-                "additionalProperties": {
-                  "type": "string"
+                "description": "Aliases for attributes in JSON values of type list",
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string"
+                    },
+                    "alias": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "alias"
+                  ]
                 }
               }
             },

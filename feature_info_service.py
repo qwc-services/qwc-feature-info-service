@@ -309,9 +309,9 @@ class FeatureInfoService():
             info_feature = InfoFeature()
             for attr in feature.get('attributes', []):
                 name = attr.get('name')
-                value = self.parse_value(attr.get('value'))
-                alias = attribute_alias_lookup.get(name, name)
                 json_aliases = json_attribute_aliases.get(name)
+                value = self.parse_value(attr.get('value'), json_aliases)
+                alias = attribute_alias_lookup.get(name, name)
                 info_feature.add(name, value, alias, json_aliases)
 
             fid = feature.get('id')
@@ -357,16 +357,40 @@ class FeatureInfoService():
             parent_facade=parent_facade
         )
 
-    def parse_value(self, value):
+    def parse_value(self, value, json_aliases):
         """Parse info result value and convert to dict or list if JSON.
 
         :param obj value: Info value
+        :param OrderedDict json_aliases: JSON attributes config
         """
         if isinstance(value, str):
             try:
                 if value.startswith('{') or value.startswith('['):
                     # parse JSON with original order of keys
-                    value = json.loads(value, object_pairs_hook=OrderedDict)
+                    json_value = json.loads(
+                        value, object_pairs_hook=OrderedDict
+                    )
+
+                    if json_aliases and isinstance(json_value, list):
+                        # JSON aliases present and JSON value is a list
+                        value = []
+                        for json_item in json_value:
+                            # reorder item keys according to JSON aliases
+                            item = OrderedDict()
+                            for key in json_aliases:
+                                if key in json_item:
+                                    item[key] = json_item[key]
+
+                            # add any additional keys not in JSON aliases
+                            for key in json_item:
+                                if key not in json_aliases:
+                                    item[key] = json_item[key]
+
+                            value.append(item)
+                    else:
+                        # JSON value is a dict or no JSON aliases present
+                        value = json_value
+
             except Exception as e:
                 self.logger.error(
                     "Could not parse value as JSON: '%s'\n%s" % (value, e)
@@ -473,7 +497,11 @@ class FeatureInfoService():
                 if attr.get('format'):
                     attribute_formats[attr['name']] = attr['format']
                 if attr.get('json_attribute_aliases'):
-                    json_aliases[attr['name']] = attr['json_attribute_aliases']
+                    # NOTE: keep order of JSON aliases from config
+                    json_attribute_aliases = OrderedDict()
+                    for entry in attr['json_attribute_aliases']:
+                        json_attribute_aliases[entry['name']] = entry['alias']
+                    json_aliases[attr['name']] = json_attribute_aliases
 
             # add layer config
             config = {
