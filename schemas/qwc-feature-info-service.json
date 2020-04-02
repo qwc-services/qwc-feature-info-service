@@ -35,19 +35,22 @@
       "type": "object",
       "properties": {
         "wms_services": {
-          "title": "Maps",
+          "title": "WMS service",
           "type": "array",
           "items": {
-            "title": "Map",
-            "description": "Map with nested layers and group layers",
+            "title": "WMS",
+            "description": "WMS service with nested layers and group layers",
             "type": "object",
             "properties": {
               "name": {
                 "type": "string"
               },
               "root_layer": {
-                "description": "Root layer of map",
-                "$ref": "#/definitions/layer"
+                "description": "Root layer of WMS (layer or group layer)",
+                "oneOf": [
+                  {"$ref": "#/definitions/layer"},
+                  {"$ref": "#/definitions/group_layer"}
+                ]
               }
             },
             "required": [
@@ -164,11 +167,34 @@
           "title": "Feature report",
           "description": "Name of corresponding feature report",
           "type": "string"
+        }
+      },
+      "required": [
+        "name"
+      ],
+      "additionalProperties": false
+    },
+    "group_layer": {
+      "title": "Group Layer",
+      "description": "Group layer with nested sublayers",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "title": {
+          "description": "Group title",
+          "type": "string"
         },
         "layers": {
-          "description": "Sublayers of this group layer",
+          "description": "Sublayers of this group layer (layers or group layers)",
           "type": "array",
-          "items": { "$ref": "#/definitions/layer" }
+          "items": {
+            "oneOf": [
+              {"$ref": "#/definitions/layer"},
+              {"$ref": "#/definitions/group_layer"}
+            ]
+          }
         },
         "hide_sublayers": {
           "title": "Hide sublayers",
@@ -177,8 +203,10 @@
         }
       },
       "required": [
-        "name"
-      ]
+        "name",
+        "layers"
+      ],
+      "additionalProperties": false
     }
   }
 }
