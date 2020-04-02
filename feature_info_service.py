@@ -71,19 +71,19 @@ class FeatureInfoService():
 
         self.db_engine = DatabaseEngine()
 
-    def query(self, identity, mapid, layers, params):
+    def query(self, identity, service_name, layers, params):
         """Query layers and return info result as XML.
 
         :param str identity: User identity
-        :param str mapid: Map ID
+        :param str service_name: Service name
         :param list(str): List of query layer names
         :param obj params: FeatureInfo service params
         """
-        if not self.wms_permitted(mapid, identity):
+        if not self.wms_permitted(service_name, identity):
             # map unknown or not permitted
             return self.service_exception(
                 'MapNotDefined',
-                'Map "%s" does not exist or is not permitted' % mapid
+                'Map "%s" does not exist or is not permitted' % service_name
             )
 
         # calculate query coordinates and resolutions
@@ -104,8 +104,9 @@ class FeatureInfoService():
 
         # filter layers by permissions and replace group layers
         # with permitted sublayers
-        permitted_layers = self.permitted_layers(mapid, identity)
-        group_layers = self.resources['wms_services'][mapid]['group_layers']
+        permitted_layers = self.permitted_layers(service_name, identity)
+        group_layers = \
+            self.resources['wms_services'][service_name]['group_layers']
         expanded_layers = self.expand_group_layers(
             layers, group_layers, permitted_layers
         )
@@ -114,7 +115,7 @@ class FeatureInfoService():
         layer_infos = []
         for layer in expanded_layers:
             info = self.get_layer_info(
-                identity, mapid, layer, x, y, crs, params
+                identity, service_name, layer, x, y, crs, params
             )
             if info is not None:
                 layer_infos.append(info)
@@ -167,11 +168,11 @@ class FeatureInfoService():
 
         return expanded_layers
 
-    def get_layer_info(self, identity, mapid, layer, x, y, crs, params):
+    def get_layer_info(self, identity, service_name, layer, x, y, crs, params):
         """Get info for a layer rendered as info template.
 
         :param str identity: User identity
-        :param str mapid: Map ID
+        :param str service_name: Service name
         :param str layer: Layer name
         :param float x: X coordinate of query
         :param float y: Y coordinate of query
@@ -179,7 +180,7 @@ class FeatureInfoService():
         :param obj params: FeatureInfo service params
         """
         # get layer config
-        config = self.resources['wms_services'][mapid]['layers'][layer]
+        config = self.resources['wms_services'][service_name]['layers'][layer]
         layer_title = config.get('title')
         info_template = config.get('info_template')
         attributes = config.get('attributes', [])
@@ -191,7 +192,9 @@ class FeatureInfoService():
         parent_facade = config.get('parent_facade')
 
         # get layer permissions
-        layer_permissions = self.layer_permissions(mapid, layer, identity)
+        layer_permissions = self.layer_permissions(
+            service_name, layer, identity
+        )
 
         # filter by permissions
         if not layer_permissions['info_template']:
@@ -227,7 +230,7 @@ class FeatureInfoService():
                 wms_url = info_template.get('wms_url')
             else:
                 # use default WMS
-                wms_url = urljoin(self.default_wms_url, mapid)
+                wms_url = urljoin(self.default_wms_url, service_name)
                 forward_auth_headers = True
             info = wms_layer_info(
                 layer, x, y, crs, params, identity, wms_url,
@@ -494,29 +497,29 @@ class FeatureInfoService():
 
             layers[layer['name']] = config
 
-    def wms_permitted(self, mapid, identity):
+    def wms_permitted(self, service_name, identity):
         """Return whether WMS is available and permitted.
 
-        :param str mapid: Map ID
+        :param str service_name: Service name
         :param obj identity: User identity
         """
-        if self.resources['wms_services'].get(mapid):
+        if self.resources['wms_services'].get(service_name):
             # get permissions for WMS
             wms_permissions = self.permissions_handler.resource_permissions(
-                'wms_services', identity, mapid
+                'wms_services', identity, service_name
             )
             if wms_permissions:
                 return True
 
         return False
 
-    def permitted_layers(self, mapid, identity):
+    def permitted_layers(self, service_name, identity):
         """Return permitted layers for a map.
 
-        :param str mapid: Map ID
+        :param str service_name: Service name
         :param obj identity: User identity
         """
-        wms_resources = self.resources['wms_services'][mapid].copy()
+        wms_resources = self.resources['wms_services'][service_name].copy()
 
         # get available layers
         available_layers = set(
@@ -526,7 +529,7 @@ class FeatureInfoService():
 
         # get permissions for WMS
         wms_permissions = self.permissions_handler.resource_permissions(
-            'wms_services', identity, mapid
+            'wms_services', identity, service_name
         )
 
         # combine permissions
@@ -542,16 +545,16 @@ class FeatureInfoService():
         # return sorted layers
         return sorted(list(permitted_layers))
 
-    def layer_permissions(self, mapid, layer, identity):
+    def layer_permissions(self, service_name, layer, identity):
         """Return permitted layer attributes and info template.
 
-        :param str mapid: Map ID
+        :param str service_name: Service name
         :param str layer: Layer name
         :param obj identity: User identity
         """
         # get permissions for WMS
         wms_permissions = self.permissions_handler.resource_permissions(
-            'wms_services', identity, mapid
+            'wms_services', identity, service_name
         )
 
         # combine permissions

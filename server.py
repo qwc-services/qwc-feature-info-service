@@ -61,8 +61,8 @@ info_parser.add_argument('FI_POLYGON_TOLERANCE', default=4)
 
 
 # routes
-@api.route('/<mapid>')
-@api.param('mapid', 'Map name, e.g. `qwc_demo`')
+@api.route('/<path:service_name>')
+@api.param('service_name', 'Service name corresponding to WMS, e.g. `qwc_demo`')
 class FeatureInfo(Resource):
     @api.doc('featureinfo')
     @api.param('layers', 'The layer names, e.g. `countries,edit_lines`')
@@ -82,7 +82,7 @@ class FeatureInfo(Resource):
                'Tolerance for picking polygons, in pixels')
     @api.expect(info_parser)
     @jwt_optional
-    def get(self, mapid):
+    def get(self, service_name):
         """Submit query
 
         Return feature info for specified layers
@@ -106,7 +106,7 @@ class FeatureInfo(Resource):
 
         info_service = info_service_handler(get_jwt_identity())
         result = info_service.query(
-            get_jwt_identity(), mapid, layers, params
+            get_jwt_identity(), service_name, layers, params
         )
 
         return Response(
