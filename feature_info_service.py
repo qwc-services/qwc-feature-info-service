@@ -105,7 +105,7 @@ class FeatureInfoService():
         # filter layers by permissions and replace group layers
         # with permitted sublayers
         permitted_layers = self.permitted_layers(mapid, identity)
-        group_layers = self.resources['maps'][mapid]['group_layers']
+        group_layers = self.resources['wms_services'][mapid]['group_layers']
         expanded_layers = self.expand_group_layers(
             layers, group_layers, permitted_layers
         )
@@ -179,7 +179,7 @@ class FeatureInfoService():
         :param obj params: FeatureInfo service params
         """
         # get layer config
-        config = self.resources['maps'][mapid]['layers'][layer]
+        config = self.resources['wms_services'][mapid]['layers'][layer]
         layer_title = config.get('title')
         info_template = config.get('info_template')
         attributes = config.get('attributes', [])
@@ -412,22 +412,22 @@ class FeatureInfoService():
 
         :param RuntimeConfig config: Config handler
         """
-        maps = {}
+        wms_services = {}
 
         # collect service resources
-        for map_obj in config.resources().get('maps', []):
+        for wms in config.resources().get('wms_services', []):
             # collect map layers
             layers = {}
             group_layers = {}
-            self.collect_layers(map_obj['root_layer'], layers, group_layers)
+            self.collect_layers(wms['root_layer'], layers, group_layers)
 
-            maps[map_obj['name']] = {
+            wms_services[wms['name']] = {
                 'layers': layers,
                 'group_layers': group_layers
             }
 
         return {
-            'maps': maps
+            'wms_services': wms_services
         }
 
     def collect_layers(self, layer, layers, group_layers, parent_group=None):
@@ -500,7 +500,7 @@ class FeatureInfoService():
         :param str mapid: Map ID
         :param obj identity: User identity
         """
-        if self.resources['maps'].get(mapid):
+        if self.resources['wms_services'].get(mapid):
             # get permissions for map
             map_permissions = self.permissions_handler.resource_permissions(
                 'maps', identity, mapid
@@ -516,10 +516,12 @@ class FeatureInfoService():
         :param str mapid: Map ID
         :param obj identity: User identity
         """
+        wms_resources = self.resources['wms_services'][mapid].copy()
+
         # get available layers
         available_layers = set(
-            list(self.resources['maps'][mapid]['layers'].keys()) +
-            list(self.resources['maps'][mapid]['group_layers'].keys())
+            list(wms_resources['layers'].keys()) +
+            list(wms_resources['group_layers'].keys())
         )
 
         # get permissions for map

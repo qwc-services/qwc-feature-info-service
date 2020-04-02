@@ -34,7 +34,7 @@
       "title": "Resources",
       "type": "object",
       "properties": {
-        "maps": {
+        "wms_services": {
           "title": "Maps",
           "type": "array",
           "items": {

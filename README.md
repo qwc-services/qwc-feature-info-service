@@ -54,12 +54,13 @@ e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 Example:
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/qwc-services/qwc-feature-info-service/master/schemas/qwc-feature-info-service.json",
   "service": "feature-info",
   "config": {
     "default_wms_url": "http://localhost:8001/ows/"
   },
   "resources": {
-    "maps": [
+    "wms_services": [
       {
         "name": "qwc_demo",
         "root_layer": {
@@ -115,9 +116,6 @@ Example:
               "name": "countries",
               "title": "Countries",
               "attributes": [
-                {
-                  "name": "id"
-                },
                 {
                   "name": "name",
                   "alias": "Name"
