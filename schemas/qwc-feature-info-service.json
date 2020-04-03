@@ -123,39 +123,10 @@
         },
         "info_template": {
           "title": "Info template",
-          "type": "object",
-          "properties": {
-            "type": {
-              "type": "string",
-              "enum": [
-                "wms",
-                "sql",
-                "module"
-              ]
-            },
-            "template": {
-              "description": "HTML template for info result",
-              "type": "string"
-            },
-            "wms_url": {
-              "description": "Custom WMS URL (WMS GetFeatureInfo only)",
-              "type": "string"
-            },
-            "database": {
-              "description": "Database connection string (DB Query only)",
-              "type": "string"
-            },
-            "sql": {
-              "description": "Query SQL (DB Query only)",
-              "type": "string"
-            },
-            "module": {
-              "description": "Custom info module name (Custom info module only)",
-              "type": "string"
-            }
-          },
-          "required": [
-            "type"
+          "oneOf": [
+            {"$ref": "#/definitions/wms_info_template"},
+            {"$ref": "#/definitions/sql_info_template"},
+            {"$ref": "#/definitions/module_info_template"}
           ]
         },
         "display_field": {
@@ -205,6 +176,79 @@
       "required": [
         "name",
         "layers"
+      ],
+      "additionalProperties": false
+    },
+    "wms_info_template": {
+      "description": "Info template for WMS GetFeatureInfo",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "wms"
+        },
+        "wms_url": {
+          "description": "Custom WMS URL if different from default_wms_url",
+          "type": "string"
+        },
+        "template": {
+          "description": "HTML template for info result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "additionalProperties": false
+    },
+    "sql_info_template": {
+      "description": "Info template for DB Query",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "sql"
+        },
+        "database": {
+          "description": "Database connection string",
+          "type": "string"
+        },
+        "sql": {
+          "description": "Query SQL",
+          "type": "string"
+        },
+        "template": {
+          "description": "HTML template for info result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "database",
+        "sql"
+      ],
+      "additionalProperties": false
+    },
+    "module_info_template": {
+      "description": "Info template using WMS GetFeatureInfo",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "module"
+        },
+        "module": {
+          "description": "Custom info module name",
+          "type": "string"
+        },
+        "template": {
+          "description": "HTML template for info result",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "module"
       ],
       "additionalProperties": false
     }
