@@ -298,11 +298,6 @@ class FeatureInfoService():
 
         template = info_template.get('template')
 
-        # lookup for attribute aliases from attribute names
-        attribute_alias_lookup = {}
-        for alias in attribute_aliases:
-            attribute_alias_lookup[attribute_aliases.get(alias)] = alias
-
         features = []
         for feature in info.get('features'):
             # create info feature with attributes
@@ -311,7 +306,7 @@ class FeatureInfoService():
                 name = attr.get('name')
                 json_aliases = json_attribute_aliases.get(name)
                 value = self.parse_value(attr.get('value'), json_aliases)
-                alias = attribute_alias_lookup.get(name, name)
+                alias = attribute_aliases.get(name, name)
                 info_feature.add(name, value, alias, json_aliases)
 
             fid = feature.get('id')
