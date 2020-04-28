@@ -1,4 +1,4 @@
-from flask import Flask, Response
+from flask import Flask, Response, jsonify
 from flask_restplus import Api, Resource, reqparse
 from flask_jwt_extended import jwt_optional, get_jwt_identity
 
@@ -125,6 +125,18 @@ class FeatureInfo(Resource):
             return int(value or default)
         except Exception as e:
             return default
+
+
+""" readyness probe endpoint """
+@app.route("/ready", methods=['GET'])
+def ready():
+    return jsonify({"status": "OK"})
+
+
+""" liveness probe endpoint """
+@app.route("/healthz", methods=['GET'])
+def healthz():
+    return jsonify({"status": "OK"})
 
 
 # local webserver
