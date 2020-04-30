@@ -57,7 +57,7 @@ Example:
   "$schema": "https://raw.githubusercontent.com/qwc-services/qwc-feature-info-service/master/schemas/qwc-feature-info-service.json",
   "service": "feature-info",
   "config": {
-    "default_wms_url": "http://localhost:8001/ows/"
+    "default_qgis_server_url": "http://localhost:8001/ows/"
   },
   "resources": {
     "wms_services": [
@@ -164,7 +164,7 @@ Example `info_template` for DB query:
 ```json
 "info_template": {
   "type": "sql",
-  "database": "postgresql:///?service=qwc_geodb",
+  "db_url": "postgresql:///?service=qwc_geodb",
   "sql": "SELECT ogc_fid as _fid_, name, formal_en, pop_est, subregion, ST_AsText(wkb_geometry) as wkt_geom FROM qwc_geodb.ne_10m_admin_0_countries WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('POINT(:x :y)', :srid)) LIMIT :feature_count;",
   "template": "<div><h2>Demo Template</h2>Pos: {{ x }}, {{ y }}<br>Name: {{ feature.Name }}</div>"
 }
@@ -182,11 +182,13 @@ Example `info_template` for Custom info module:
 
 ### Permissions
 
+* [JSON schema](https://github.com/qwc-services/qwc-services-core/blob/master/schemas/qwc-services-permissions.json)
 * File location: `$CONFIG_PATH/<tenant>/permissions.json`
 
 Example:
 ```json
 {
+  "$schema": "https://raw.githubusercontent.com/qwc-services/qwc-services-core/master/schemas/qwc-services-permissions.json",
   "users": [
     {
       "name": "demo",
