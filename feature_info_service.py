@@ -239,7 +239,7 @@ class FeatureInfoService():
             )
         elif info_type == 'sql':
             # DB query
-            database = info_template.get('database')
+            database = info_template.get('db_url')
             sql = info_template.get('sql')
             info = sql_layer_info(
                 layer, x, y, crs, params, identity, self.db_engine, database,
