@@ -24,9 +24,10 @@
           "description": "Default HTML info template",
           "type": "string"
         },
-        "default_wms_url": {
-          "description": "Default WMS URL for WMS GetFeatureInfo queries",
-          "type": "string"
+        "default_qgis_server_url": {
+          "description": "Default URL for WMS GetFeatureInfo queries",
+          "type": "string",
+          "format": "uri"
         }
       }
     },
@@ -43,6 +44,7 @@
             "type": "object",
             "properties": {
               "name": {
+                "description": "WMS service name",
                 "type": "string"
               },
               "root_layer": {
@@ -70,11 +72,17 @@
   "definitions": {
     "layer": {
       "title": "Layer",
-      "description": "Layer or group layer",
+      "description": "Single layer",
       "type": "object",
       "properties": {
         "name": {
+          "description": "WMS layer name",
           "type": "string"
+        },
+        "type": {
+          "description": "Layer type",
+          "type": "string",
+          "const": "layer"
         },
         "title": {
           "description": "Layer title",
@@ -86,6 +94,7 @@
             "type": "object",
             "properties": {
               "name": {
+                "description": "Attribute name",
                 "type": "string"
               },
               "alias": {
@@ -103,9 +112,11 @@
                   "type": "object",
                   "properties": {
                     "name": {
+                      "description": "Attribute name in JSON value",
                       "type": "string"
                     },
                     "alias": {
+                      "description": "Alias for attribute in JSON value",
                       "type": "string"
                     }
                   },
@@ -151,7 +162,13 @@
       "type": "object",
       "properties": {
         "name": {
+          "description": "WMS group layer name",
           "type": "string"
+        },
+        "type": {
+          "description": "Layer type",
+          "type": "string",
+          "const": "layergroup"
         },
         "title": {
           "description": "Group title",
@@ -169,7 +186,7 @@
         },
         "hide_sublayers": {
           "title": "Hide sublayers",
-          "description": "Hide sublayers of this group layer if set, to make the group layer look like a regular layer",
+          "description": "Hide sublayers of this group layer if set, to make the group layer look like a regular layer (Facade layer)",
           "type": "boolean"
         }
       },
@@ -188,8 +205,9 @@
           "const": "wms"
         },
         "wms_url": {
-          "description": "Custom WMS URL if different from default_wms_url",
-          "type": "string"
+          "description": "Custom WMS URL if different from default_qgis_server_url",
+          "type": "string",
+          "format": "uri"
         },
         "template": {
           "description": "HTML template for info result",
@@ -209,7 +227,7 @@
           "type": "string",
           "const": "sql"
         },
-        "database": {
+        "db_url": {
           "description": "Database connection string",
           "type": "string"
         },
@@ -224,7 +242,7 @@
       },
       "required": [
         "type",
-        "database",
+        "db_url",
         "sql"
       ],
       "additionalProperties": false
