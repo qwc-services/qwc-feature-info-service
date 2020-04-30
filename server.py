@@ -30,12 +30,9 @@ jwt = jwt_manager(app, api)
 tenant_handler = TenantHandler(app.logger)
 
 
-def info_service_handler(identity):
-    """Get or create a FeatureInfoService instance for a tenant.
-
-    :param str identity: User identity
-    """
-    tenant = tenant_handler.tenant(identity)
+def info_service_handler():
+    """Get or create a FeatureInfoService instance for a tenant."""
+    tenant = tenant_handler.tenant()
     handler = tenant_handler.handler('featureInfo', 'info', tenant)
     if handler is None:
         handler = tenant_handler.register_handler(
@@ -104,7 +101,7 @@ class FeatureInfo(Resource):
             'FI_POLYGON_TOLERANCE': self.to_int(args["FI_POLYGON_TOLERANCE"], 4)
         }
 
-        info_service = info_service_handler(get_jwt_identity())
+        info_service = info_service_handler()
         result = info_service.query(
             get_jwt_identity(), service_name, layers, params
         )
