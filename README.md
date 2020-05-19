@@ -1,4 +1,4 @@
-[![](https://github.com/qwc-services/qwc-feature-info-service/workflows/build/badge.svg)](https://hub.docker.com/repository/docker/sourcepole/qwc-feature-info-service)
+[![](https://github.com/qwc-services/qwc-feature-info-service/workflows/build/badge.svg)](https://github.com/qwc-services/qwc-feature-info-service/actions)
 [![](https://img.shields.io/docker/pulls/sourcepole/qwc-feature-info-service)](https://hub.docker.com/repository/docker/sourcepole/qwc-feature-info-service)
 
 QWC FeatureInfo Service
