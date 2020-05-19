@@ -5,4 +5,4 @@ psycopg2==2.7.7
 requests==2.21.0
 SQLAlchemy==1.2.18
 werkzeug==0.16.1
-qwc-services-core==0.1.2
+qwc-services-core==0.1.4
