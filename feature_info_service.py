@@ -65,6 +65,7 @@ class FeatureInfoService():
             'default_info_template', default_info_template)
         self.default_wms_url = config.get(
             'default_qgis_server_url', 'http://localhost:8001/ows/')
+        self.data_service_url = config.get('data_service_url', '/api/v1/data/')
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
@@ -306,6 +307,10 @@ class FeatureInfoService():
                 name = attr.get('name')
                 json_aliases = json_attribute_aliases.get(name)
                 value = self.parse_value(attr.get('value'), json_aliases)
+                if value.startswith("attachment://"):
+                    link = self.data_service_url + "/" + service_name + "." + layer + "/attachment?file=" + value.lstrip("attachment://")
+                    label = value[value.rfind("/") + 1:]
+                    value = "<a href=\"%s\" target=\"_blank\">%s</a>" % (link, label)
                 alias = attribute_aliases.get(name, name)
                 info_feature.add(name, value, alias, json_aliases)
 

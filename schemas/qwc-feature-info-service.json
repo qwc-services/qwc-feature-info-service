@@ -28,6 +28,11 @@
           "description": "Default URL for WMS GetFeatureInfo queries",
           "type": "string",
           "format": "uri"
+        },
+        "data_service_url": {
+          "description": "Data service URL",
+          "type": "string",
+          "format": "uri"
         }
       }
     },
