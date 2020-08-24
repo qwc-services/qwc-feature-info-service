@@ -308,9 +308,7 @@ class FeatureInfoService():
                 json_aliases = json_attribute_aliases.get(name)
                 value = self.parse_value(attr.get('value'), json_aliases)
                 if value.startswith("attachment://"):
-                    link = self.data_service_url + "/" + service_name + "." + layer + "/attachment?file=" + value.lstrip("attachment://")
-                    label = value[value.rfind("/") + 1:]
-                    value = "<a href=\"%s\" target=\"_blank\">%s</a>" % (link, label)
+                    value = "attachment://" + self.data_service_url + "/" + service_name + "." + layer + "/attachment?file=" + value.lstrip("attachment://")
                 alias = attribute_aliases.get(name, name)
                 info_feature.add(name, value, alias, json_aliases)
 
@@ -412,6 +410,10 @@ class FeatureInfoService():
                 # HTML links
                 r'^(https?:\/\/.*)$',
                 lambda m: m.expand(r'<a href="\1" target="_blank">Link</a>')
+            ),(
+                # Attachments
+                r'^attachment://(.+)/([^/]+)$',
+                lambda m: m.expand(r'<a href="\1/\2" target="_blank">\2</a>')
             )]
             for rule in rules:
                 match = re.match(rule[0], value)
