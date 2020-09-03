@@ -31,6 +31,11 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
     features = []
 
     try:
+        # reverse lookup for attribute names from alias
+        alias_attributes = {}
+        for name, alias in attribute_aliases.items():
+            alias_attributes[alias] = name
+
         headers = {}
         if forward_auth_headers:
             # forward any authorization headers
@@ -74,7 +79,10 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                     # parse attributes
                     info_attributes = {}
                     for attrEl in featureEl.getElementsByTagName('Attribute'):
-                        name = attrEl.getAttribute('name')
+                        # name from GetFeatureInfo may be alias or name
+                        info_name = attrEl.getAttribute('name')
+                        # lookup attribute name for alias
+                        name = alias_attributes.get(info_name, info_name)
                         if name in permitted_attributes:
                             # add permitted attribute
                             value = attrEl.getAttribute('value')
