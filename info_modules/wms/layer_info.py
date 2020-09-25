@@ -1,5 +1,6 @@
 import re
 import os
+import time
 import traceback
 from datetime import datetime, date
 from urllib.parse import urlencode
@@ -8,6 +9,10 @@ from flask import json
 from flask_jwt_extended import create_access_token
 import requests
 from xml.dom.minidom import parseString
+
+
+THROTTLE_LAYERS = os.environ.get('THROTTLE_LAYERS', '').split(',')
+THROTTLE_TIME = 1.5
 
 
 def layer_info(layer, x, y, crs, params, identity, wms_url,
@@ -54,6 +59,10 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
             'layers': layer,
             'query_layers': layer
         })
+
+        if layer in THROTTLE_LAYERS:
+            logger.info("Defer layer %s for %fs" % (layer, THROTTLE_TIME))
+            time.sleep(THROTTLE_TIME)
 
         logger.info(
             "Forward WMS GetFeatureInfo request to %s?%s" %
