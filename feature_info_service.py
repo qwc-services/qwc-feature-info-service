@@ -65,7 +65,8 @@ class FeatureInfoService():
             'default_info_template', default_info_template)
         self.default_wms_url = config.get(
             'default_qgis_server_url', 'http://localhost:8001/ows/')
-        self.data_service_url = config.get('data_service_url', '/api/v1/data/')
+        self.data_service_url = config.get(
+            'data_service_url', '/api/v1/data/').rstrip('/') + '/'
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
