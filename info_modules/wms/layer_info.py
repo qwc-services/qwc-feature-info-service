@@ -102,11 +102,10 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                                 info_attributes[name] = value
 
                     # add info attributes in order of permitted_attributes
-                    for attr in permitted_attributes:
-                        if attr in info_attributes:
-                            name = attribute_aliases.get(attr, attr)
+                    for name in permitted_attributes:
+                        if name in info_attributes:
                             format = attribute_formats.get(name)
-                            value = info_attributes.get(attr)
+                            value = info_attributes.get(name)
 
                             attributes.append({
                                 'name': name,
@@ -135,7 +134,6 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                 # parse attributes
                 for attrEl in layerEl.getElementsByTagName('Attribute'):
                     name = attrEl.getAttribute('name')
-                    name = attribute_aliases.get(name, name)
                     format = attribute_formats.get(name)
                     value = attrEl.getAttribute('value')
 
