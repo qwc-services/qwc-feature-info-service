@@ -43,11 +43,12 @@ def info_service_handler():
 # request parser
 info_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
 info_parser.add_argument('layers', required=True)
-info_parser.add_argument('i', required=True)
-info_parser.add_argument('j', required=True)
+info_parser.add_argument('i')
+info_parser.add_argument('j')
+info_parser.add_argument('bbox')
+info_parser.add_argument('filter_geom')
 info_parser.add_argument('height', required=True)
 info_parser.add_argument('width', required=True)
-info_parser.add_argument('bbox', required=True)
 info_parser.add_argument('crs', required=True)
 info_parser.add_argument('feature_count', default=1)
 info_parser.add_argument('with_geometry', default=1)
@@ -63,12 +64,17 @@ info_parser.add_argument('FI_POLYGON_TOLERANCE', default=4)
 class FeatureInfo(Resource):
     @api.doc('featureinfo')
     @api.param('layers', 'The layer names, e.g. `countries,edit_lines`')
-    @api.param('i', 'X ordinate of query point on map, in pixels, e.g. `51`')
-    @api.param('j', 'Y ordinate of query point on map, in pixels, e.g. `51`')
+    @api.param('i', 'X ordinate of query point on map, in pixels, e.g. `51`. '
+               'Required unless filter_geom is specified.')
+    @api.param('j', 'Y ordinate of query point on map, in pixels, e.g. `51`. '
+               'Required unless filter_geom is specified.')
+    @api.param('filter_geom', 'Filter geometry, as a WKT string. '
+               'Required unless i and j and bbox are specified.')
     @api.param('height', 'Height of map output, in pixels, e.g. `101`')
     @api.param('width', 'Width of map output, in pixels, e.g. `101`')
     @api.param('bbox', 'Bounding box for map extent, '
-               'e.g. `671639,5694018,1244689,6267068`')
+               'e.g. `671639,5694018,1244689,6267068`. '
+               'Required unless filter_geom is specified.')
     @api.param('crs', 'CRS for map extent, e.g. `EPSG:3857`')
     @api.param('feature_count', 'Max feature count')
     @api.param('with_geometry', 'Whether to return geometries in response')
@@ -87,11 +93,8 @@ class FeatureInfo(Resource):
         args = info_parser.parse_args()
         layers = args['layers'].split(',')
         params = {
-            'i': self.to_int(args['i'], 0),
-            'j': self.to_int(args['j'], 0),
             'height': self.to_int(args['height'], 0),
             'width': self.to_int(args['width'], 0),
-            'bbox': args['bbox'],
             'crs': args['crs'],
             'feature_count': self.to_int(args['feature_count'], 1),
             'with_geometry': self.to_int(args['with_geometry'], 1),
@@ -100,6 +103,14 @@ class FeatureInfo(Resource):
             'FI_LINE_TOLERANCE': self.to_int(args['FI_LINE_TOLERANCE'], 8),
             'FI_POLYGON_TOLERANCE': self.to_int(args["FI_POLYGON_TOLERANCE"], 4)
         }
+        if 'filter_geom' in args and args['filter_geom']:
+            params['filter_geom'] = args['filter_geom']
+        elif 'i' in args and args['i'] and 'j' in args and args['j'] and 'bbox' in args and args['bbox']:
+            params['i'] = self.to_int(args['i'], 0)
+            params['j'] = self.to_int(args['j'], 0)
+            params['bbox'] = args['bbox']
+        else:
+            api.abort(404, "Either filter_geom, or i and j, are required")
 
         info_service = info_service_handler()
         result = info_service.query(
