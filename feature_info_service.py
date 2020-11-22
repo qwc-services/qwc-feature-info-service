@@ -405,6 +405,10 @@ class FeatureInfoService():
         :param bool htmlEscape: Whether to HTML escape the value
         """
         if isinstance(value, str):
+            # If value is already html (i.e. begins with a valid HTML tag), return it as is
+            if value.startswith("<") and value.find(">") != -1 and re.match("<(\"[^\"]*\"|'[^']*'|[^'\">])*>", value[0:value.find(">") + 1]):
+                return value
+
             if htmlEscape:
                 value = html.escape(value)
             rules = [(
