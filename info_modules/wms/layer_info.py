@@ -101,9 +101,9 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                             else:
                                 info_attributes[name] = value
 
-                    # add info attributes in order of permitted_attributes
-                    for name in permitted_attributes:
-                        if name in info_attributes:
+                    # add info attributes if permitted
+                    for name in info_attributes:
+                        if name in permitted_attributes:
                             format = attribute_formats.get(name)
                             value = info_attributes.get(name)
 
