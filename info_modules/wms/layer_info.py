@@ -12,6 +12,7 @@ from xml.dom.minidom import parseString
 
 
 THROTTLE_LAYERS = os.environ.get('THROTTLE_LAYERS', '').split(',')
+USE_PERMISSION_ATTRIBUTE_ORDER = os.environ.get('USE_PERMISSION_ATTRIBUTE_ORDER', '0') not in [0, "0", "False", "FALSE"]
 THROTTLE_TIME = 1.5
 
 
@@ -101,16 +102,28 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                             else:
                                 info_attributes[name] = value
 
-                    # add info attributes if permitted
-                    for name in info_attributes:
-                        if name in permitted_attributes:
-                            format = attribute_formats.get(name)
-                            value = info_attributes.get(name)
+                    if USE_PERMISSION_ATTRIBUTE_ORDER:
+                        # add info attributes in order of permitted_attributes
+                        for name in permitted_attributes:
+                            if name in info_attributes:
+                                format = attribute_formats.get(name)
+                                value = info_attributes.get(name)
 
-                            attributes.append({
-                                'name': name,
-                                'value': formatted_value(value, format, logger)
-                            })
+                                attributes.append({
+                                    'name': name,
+                                    'value': formatted_value(value, format, logger)
+                                })
+                    else:
+                        # add info attributes if permitted, preserving featureinfo response order
+                        for name in info_attributes:
+                            if name in permitted_attributes:
+                                format = attribute_formats.get(name)
+                                value = info_attributes.get(name)
+
+                                attributes.append({
+                                    'name': name,
+                                    'value': formatted_value(value, format, logger)
+                                })
 
                     # parse bbox
                     for bboxEl in featureEl.getElementsByTagName('BoundingBox'):
