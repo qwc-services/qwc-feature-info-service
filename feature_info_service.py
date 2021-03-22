@@ -309,7 +309,7 @@ class FeatureInfoService():
                 json_aliases = json_attribute_aliases.get(name)
                 value = self.parse_value(attr.get('value'), json_aliases)
                 if isinstance(value, str) and value.startswith("attachment://"):
-                    value = "attachment://" + self.data_service_url + "/" + service_name + "." + layer + "/attachment?file=" + value.lstrip("attachment://")
+                    value = "attachment://" + self.data_service_url + "/" + service_name + "." + layer + "/attachment?file=" + value[13:]
                 alias = attribute_aliases.get(name, name)
                 info_feature.add(name, value, alias, json_aliases)
 
