@@ -380,10 +380,7 @@ class FeatureInfoService():
                                 if key in json_item:
                                     item[key] = json_item[key]
 
-                            # add any additional keys not in JSON aliases
-                            for key in json_item:
-                                if key not in json_aliases:
-                                    item[key] = json_item[key]
+                            # NOTE: skip any keys not in JSON aliases
 
                             value.append(item)
                     else:
