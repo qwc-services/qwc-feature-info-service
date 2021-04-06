@@ -13,6 +13,7 @@ from xml.dom.minidom import parseString
 
 THROTTLE_LAYERS = os.environ.get('THROTTLE_LAYERS', '').split(',')
 USE_PERMISSION_ATTRIBUTE_ORDER = os.environ.get('USE_PERMISSION_ATTRIBUTE_ORDER', '0') not in [0, "0", "False", "FALSE"]
+SKIP_EMPTY_ATTRIBUTES = os.environ.get('SKIP_EMPTY_ATTRIBUTES', '0') not in [0, "0", "False", "FALSE"]
 THROTTLE_TIME = 1.5
 
 
@@ -96,7 +97,9 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                         if name in permitted_attributes:
                             # add permitted attribute
                             value = attrEl.getAttribute('value')
-                            if (name == 'geometry' and
+                            if value in ["", "NULL", "null"] and SKIP_EMPTY_ATTRIBUTES:
+                                continue
+                            elif (name == 'geometry' and
                                     attrEl.getAttribute('type') == 'derived'):
                                 geometry = value
                             else:
