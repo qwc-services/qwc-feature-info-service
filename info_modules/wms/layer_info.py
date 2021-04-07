@@ -1,3 +1,4 @@
+from collections import OrderedDict
 import re
 import os
 import time
@@ -88,7 +89,7 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                     geometry = None
 
                     # parse attributes
-                    info_attributes = {}
+                    info_attributes = OrderedDict()
                     for attrEl in featureEl.getElementsByTagName('Attribute'):
                         # name from GetFeatureInfo may be alias or name
                         info_name = attrEl.getAttribute('name')
