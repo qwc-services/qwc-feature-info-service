@@ -32,11 +32,31 @@ class InfoFeature(object):
         :param obj json_aliases: JSON attributes config
         """
         # set attribute as class property
+        # NOTE: JSON values are not filtered to allow full access from
+        #       custom info templates
         setattr(self, name, value)
+
+        filtered_value = value
+        if json_aliases and isinstance(value, list):
+            # JSON aliases present and JSON value is a list
+            # NOTE: filter list items, so that any keys not in JSON aliases
+            #       are hidden in the default info templates
+            filtered_value = []
+            for json_item in value:
+                # reorder item keys according to JSON aliases
+                item = OrderedDict()
+                for key in json_aliases:
+                    if key in json_item:
+                        item[key] = json_item[key]
+
+                # NOTE: skip any keys not in JSON aliases
+
+                filtered_value.append(item)
+
         # add to ordered attribute list
         self._attributes.append({
             'name': name,
-            'value': value,
+            'value': filtered_value,
             'alias': alias,
             'type': type(value).__name__,
             'json_aliases': json_aliases
@@ -380,7 +400,10 @@ class FeatureInfoService():
                                 if key in json_item:
                                     item[key] = json_item[key]
 
-                            # NOTE: skip any keys not in JSON aliases
+                            # add any additional keys not in JSON aliases
+                            for key in json_item:
+                                if key not in json_aliases:
+                                    item[key] = json_item[key]
 
                             value.append(item)
                     else:
