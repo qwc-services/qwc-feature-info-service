@@ -438,7 +438,7 @@ class FeatureInfoService():
             ),(
                 # Attachments
                 r'^attachment://(.+)/([^/]+)$',
-                lambda m: m.expand(r'<a href="\1/\2" target="_blank">\2</a>')
+                lambda m: m.expand(r'<a href="\1/\2" target="_blank"><img src="\1/\2" alt="\2" style="width: 100%" /></a>')
             )]
             for rule in rules:
                 match = re.match(rule[0], value)
