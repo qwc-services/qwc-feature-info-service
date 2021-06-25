@@ -26,13 +26,11 @@
         },
         "default_qgis_server_url": {
           "description": "Default URL for WMS GetFeatureInfo queries",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "data_service_url": {
           "description": "Data service URL",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         }
       }
     },
@@ -211,8 +209,7 @@
         },
         "wms_url": {
           "description": "Custom WMS URL if different from default_qgis_server_url",
-          "type": "string",
-          "format": "uri"
+          "type": "string"
         },
         "template": {
           "description": "HTML template for info result",
