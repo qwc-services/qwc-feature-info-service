@@ -1,3 +1,4 @@
+import base64
 from collections import OrderedDict
 import html
 from importlib import import_module
@@ -81,8 +82,16 @@ class FeatureInfoService():
         config_handler = RuntimeConfig("featureInfo", logger)
         config = config_handler.tenant_config(tenant)
 
-        self.default_info_template = config.get(
-            'default_info_template', default_info_template)
+        if config.get('default_info_template'):
+            self.default_info_template = config.get('default_info_template')
+        elif config.get('default_info_template_base64'):
+            self.default_info_template = self.b64decode(
+                config.get('default_info_template_base64'),
+                default_info_template, "default info template"
+            )
+        else:
+            self.default_info_template = default_info_template
+
         self.default_wms_url = config.get(
             'default_qgis_server_url', 'http://localhost:8001/ows/')
         self.data_service_url = config.get(
@@ -226,6 +235,14 @@ class FeatureInfoService():
             if attr in layer_permissions['attributes']
         ]
 
+        if info_template and not info_template.get('template'):
+            # use any Base64 encoded info template
+            if info_template.get('template_base64'):
+                info_template['template'] = self.b64decode(
+                    info_template.get('template_base64'), None,
+                    "info template of layer '%s'" % layer
+                )
+
         if info_template is None:
             self.logger.info("No info template for layer '%s'" % layer)
             # fallback to WMS GetFeatureInfo with default info template
@@ -263,6 +280,12 @@ class FeatureInfoService():
             # DB query
             database = info_template.get('db_url')
             sql = info_template.get('sql')
+            if not sql:
+                # use any Base64 encoded info SQL
+                sql = self.b64decode(
+                    info_template.get('sql_base64'), "",
+                    "info SQL of layer '%s'" % layer
+                )
             info = sql_layer_info(
                 layer, x, y, crs, params, identity, self.db_engine, database,
                 sql, self.logger
@@ -523,6 +546,15 @@ class FeatureInfoService():
                     attribute_aliases[attr['name']] = attr['alias']
                 if attr.get('format'):
                     attribute_formats[attr['name']] = attr['format']
+                elif attr.get('format_base64'):
+                    attr_format = self.b64decode(
+                        attr.get('format_base64'), None,
+                        "format of attribute '%s' in layer '%s'"
+                        % (attr['name'], layer['name'])
+                    )
+                    if attr_format:
+                        attribute_formats[attr['name']] = attr_format
+
                 if attr.get('json_attribute_aliases'):
                     # NOTE: keep order of JSON aliases from config
                     json_attribute_aliases = OrderedDict()
@@ -628,3 +660,21 @@ class FeatureInfoService():
             'attributes': sorted(list(permitted_attributes)),
             'info_template': info_template_permitted
         }
+
+    def b64decode(self, base64_value, default, description=""):
+        """Return decoded Base64 encoded value or default on error.
+
+        :param str base64_value: Base64 encoded value
+        :param str default: Default value returned on decoding error
+        :param str description: Description included in error message
+        """
+        value = default
+        try:
+            value = base64.b64decode(base64_value).decode('utf-8')
+        except Exception as e:
+            self.logger.error(
+                "Could not decode Base64 encoded value for %s:"
+                "\n%s\n%s" % (description, e, base64_value)
+            )
+            value = default
+        return value

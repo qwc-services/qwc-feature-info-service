@@ -188,6 +188,18 @@ Example `info_template` for Custom info module:
 ```
 
 
+#### Base64 encoded properties
+
+The following config properties may also be set as Base64 encoded values instead:
+
+* Default HTML info template: `default_info_template_base64`
+* Formatting expression for converting attribute values: `format_base64`
+* HTML template for info result: `template_base64`
+* Query SQL for DB query: `sql_base64`
+
+Any plain text properties take precedence over their corresponding Base64 encoded property (e.g. `template_base64` is only used if `template` is not set).
+
+
 ### Permissions
 
 * [JSON schema](https://github.com/qwc-services/qwc-services-core/blob/master/schemas/qwc-services-permissions.json)

@@ -24,6 +24,11 @@
           "description": "Default HTML info template",
           "type": "string"
         },
+        "default_info_template_base64": {
+          "description": "Default HTML info template in Base64 encoding",
+          "type": "string",
+          "contentEncoding": "base64"
+        },
         "default_qgis_server_url": {
           "description": "Default URL for WMS GetFeatureInfo queries",
           "type": "string"
@@ -106,6 +111,11 @@
               "format": {
                 "description": "Formatting expression for converting attribute values",
                 "type": "string"
+              },
+              "format_base64": {
+                "description": "Formatting expression for converting attribute values, in Base64 encoding",
+                "type": "string",
+                "contentEncoding": "base64"
               },
               "json_attribute_aliases": {
                 "title": "JSON attribute aliases",
@@ -214,6 +224,11 @@
         "template": {
           "description": "HTML template for info result",
           "type": "string"
+        },
+        "template_base64": {
+          "description": "HTML template for info result, in Base64 encoding",
+          "type": "string",
+          "contentEncoding": "base64"
         }
       },
       "required": [
@@ -237,15 +252,36 @@
           "description": "Query SQL",
           "type": "string"
         },
+        "sql_base64": {
+          "description": "Query SQL in Base64 encoding",
+          "type": "string",
+          "contentEncoding": "base64"
+        },
         "template": {
           "description": "HTML template for info result",
           "type": "string"
+        },
+        "template_base64": {
+          "description": "HTML template for info result, in Base64 encoding",
+          "type": "string",
+          "contentEncoding": "base64"
         }
       },
-      "required": [
-        "type",
-        "db_url",
-        "sql"
+      "oneOf": [
+        {
+          "required": [
+            "type",
+            "db_url",
+            "sql"
+          ]
+        },
+        {
+          "required": [
+            "type",
+            "db_url",
+            "sql_base64"
+          ]
+        }
       ],
       "additionalProperties": false
     },
@@ -264,6 +300,11 @@
         "template": {
           "description": "HTML template for info result",
           "type": "string"
+        },
+        "template_base64": {
+          "description": "HTML template for info result, in Base64 encoding",
+          "type": "string",
+          "contentEncoding": "base64"
         }
       },
       "required": [
