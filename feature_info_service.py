@@ -454,6 +454,7 @@ class FeatureInfoService():
 
             if htmlEscape:
                 value = html.escape(value)
+            value = value.replace("\n", "<br />")
             rules = [(
                 # HTML links
                 r'^(https?:\/\/.*)$',
