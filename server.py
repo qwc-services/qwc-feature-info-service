@@ -1,9 +1,9 @@
 from flask import Flask, Response, jsonify
 from flask_restx import Api, Resource, reqparse
-from flask_jwt_extended import jwt_optional, get_jwt_identity
+from jwt.exceptions import InvalidSignatureError
 
+from qwc_services_core.auth import auth_manager, optional_auth, get_identity
 from qwc_services_core.api import CaseInsensitiveArgument
-from qwc_services_core.jwt import jwt_manager
 from qwc_services_core.tenant_handler import TenantHandler
 from feature_info_service import FeatureInfoService
 
@@ -24,7 +24,7 @@ app.config['RESTPLUS_MASK_SWAGGER'] = False
 app.config['ERROR_404_HELP'] = False
 
 # Setup the Flask-JWT-Extended extension
-jwt = jwt_manager(app, api)
+jwt = auth_manager(app, api)
 
 # create tenant handler
 tenant_handler = TenantHandler(app.logger)
@@ -84,7 +84,7 @@ class FeatureInfo(Resource):
     @api.param('FI_POLYGON_TOLERANCE',
                'Tolerance for picking polygons, in pixels')
     @api.expect(info_parser)
-    @jwt_optional
+    @optional_auth
     def get(self, service_name):
         """Submit query
 
@@ -114,7 +114,7 @@ class FeatureInfo(Resource):
 
         info_service = info_service_handler()
         result = info_service.query(
-            get_jwt_identity(), service_name, layers, params
+            get_identity(), service_name, layers, params
         )
 
         return Response(
