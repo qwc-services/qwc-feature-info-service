@@ -176,6 +176,8 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
 
 
 CONVERSION_RULES = [
+    (re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{1,6}$'),  # YYYY-MM-DDTHH:mm:ss.micros
+     lambda m: datetime.strptime(m.group(0), '%Y-%m-%dT%H:%M:%S.%f')),
     (re.compile(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$'),  # YYYY-MM-DDTHH:mm:ss
      lambda m: datetime.strptime(m.group(0), '%Y-%m-%dT%H:%M:%S')),
     (re.compile(r'^\d{4}-\d{2}-\d{2}$'),  # YYYY-MM-DD
@@ -209,10 +211,10 @@ def formatted_value(value, formatstr, logger):
 
     # Add default formats for some types
     if not formatstr:
-        if isinstance(value, date):
-            formatstr = "%d.%m.%Y"
-        elif isinstance(value, datetime):
+        if isinstance(value, datetime):
             formatstr = "%d.%m.%Y %H:%M:%S"
+        elif isinstance(value, date):
+            formatstr = "%d.%m.%Y"
 
     # Apply NULL value default format
     if value is None:
