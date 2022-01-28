@@ -1,3 +1,6 @@
+import locale
+import os
+
 from flask import Flask, Response, jsonify
 from flask_restx import Api, Resource, reqparse
 from jwt.exceptions import InvalidSignatureError
@@ -7,6 +10,9 @@ from qwc_services_core.api import CaseInsensitiveArgument
 from qwc_services_core.tenant_handler import TenantHandler
 from feature_info_service import FeatureInfoService
 
+
+# set locale for value formatting
+locale.setlocale(locale.LC_ALL, os.environ.get('LANG', 'C'))
 
 # Flask application
 app = Flask(__name__)
