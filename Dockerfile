@@ -1,13 +1,9 @@
-# WSGI service environment
-
-FROM sourcepole/qwc-uwsgi-base:alpine-latest
-
-# Required for pip with git repos
-RUN apk add --no-cache --update git
-# Required for psychopg, --> https://github.com/psycopg/psycopg2/issues/684
-RUN apk add --no-cache --update postgresql-dev gcc python3-dev musl-dev
-
-# maybe set locale here if needed
+# Ubuntu image has locales, which we want e.g. for psql client_encoding or info formatting
+FROM sourcepole/qwc-uwsgi-base:ubuntu-v2021.12.16
 
 ADD . /srv/qwc_service
 RUN pip3 install --no-cache-dir -r /srv/qwc_service/requirements.txt
+
+# Default locale is en_US.utf8
+# RUN localedef -i de_CH -c -f UTF-8 -A /usr/share/locale/locale.alias de_CH.UTF-8
+# ENV LANG de_CH.utf8
