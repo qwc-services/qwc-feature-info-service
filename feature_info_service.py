@@ -6,6 +6,7 @@ import re
 import traceback
 from urllib.parse import urljoin
 from xml.dom.minidom import Document, Element, Text
+from geomet import wkt
 
 from flask import json
 from jinja2 import Template, TemplateError, TemplateSyntaxError
@@ -17,6 +18,7 @@ from qwc_services_core.runtime_config import RuntimeConfig
 from info_modules.sql import layer_info as sql_layer_info
 from info_modules.wms import layer_info as wms_layer_info
 from info_templates import default_info_template, layer_template
+from utils import geom_center
 
 
 class InfoFeature(object):
@@ -222,6 +224,13 @@ class FeatureInfoService():
         feature_report = config.get('feature_report')
         parent_facade = config.get('parent_facade')
 
+        layerattribsfilter = params.get('LAYERATTRIBS', '')
+        geomcentroid = params.get('GEOMCENTROID', 0)
+        if 'LAYERATTRIBS' in params:
+            del params['LAYERATTRIBS']
+        if 'GEOMCENTROID' in params:
+            del params['GEOMCENTROID']
+
         # get layer permissions
         layer_permissions = self.layer_permissions(
             service_name, layer, identity
@@ -382,12 +391,26 @@ class FeatureInfoService():
                     error_msg
                 )
 
+            attributes = info_feature._attributes
+            if layerattribsfilter:
+                filterobj = json.loads(layerattribsfilter)
+                if layer in filterobj:
+                    keep_attrs = filterobj[layer]
+                    attributes = list(filter(lambda entry: entry['name'] in keep_attrs, attributes))
+
+            if geomcentroid and geometry:
+                gj = wkt.loads(geometry.upper())
+                geometry = wkt.dumps({
+                    "type": "Point",
+                    "coordinates": geom_center(gj["type"], gj["coordinates"])
+                })
+
             features.append({
                 'fid': fid,
                 'html_content': self.html_content(info_html),
                 'bbox': bbox,
                 'wkt_geom': geometry,
-                'attributes': info_feature._attributes
+                'attributes': attributes
             })
 
         # render layer template
