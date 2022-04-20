@@ -226,10 +226,14 @@ class FeatureInfoService():
 
         layerattribsfilter = params.get('LAYERATTRIBS', '')
         geomcentroid = params.get('GEOMCENTROID', "false").lower() in ["true", "1"]
+        with_htmlcontent = params.get('with_htmlcontent', "true").lower() in ["true", "1"]
+
         if 'LAYERATTRIBS' in params:
             del params['LAYERATTRIBS']
         if 'GEOMCENTROID' in params:
             del params['GEOMCENTROID']
+        if 'with_htmlcontent' in params:
+            del params['with_htmlcontent']
 
         # get layer permissions
         layer_permissions = self.layer_permissions(
@@ -407,7 +411,7 @@ class FeatureInfoService():
 
             features.append({
                 'fid': fid,
-                'html_content': self.html_content(info_html),
+                'html_content': self.html_content(info_html) if with_htmlcontent else "",
                 'bbox': bbox,
                 'wkt_geom': geometry,
                 'attributes': attributes
