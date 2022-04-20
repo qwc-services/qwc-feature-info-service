@@ -225,7 +225,7 @@ class FeatureInfoService():
         parent_facade = config.get('parent_facade')
 
         layerattribsfilter = params.get('LAYERATTRIBS', '')
-        geomcentroid = params.get('GEOMCENTROID', 0)
+        geomcentroid = params.get('GEOMCENTROID', "false").lower() in ["true", "1"]
         if 'LAYERATTRIBS' in params:
             del params['LAYERATTRIBS']
         if 'GEOMCENTROID' in params:
