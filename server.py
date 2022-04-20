@@ -62,8 +62,8 @@ info_parser.add_argument('with_maptip', default="true", type=str)
 info_parser.add_argument('FI_POINT_TOLERANCE', default=16, type=int)
 info_parser.add_argument('FI_LINE_TOLERANCE', default=8, type=int)
 info_parser.add_argument('FI_POLYGON_TOLERANCE', default=4, type=int)
-info_parser.add_argument('LAYERATTRIBS', type=str)
-info_parser.add_argument('GEOMCENTROID', type=str)
+info_parser.add_argument('LAYERATTRIBS', default="", type=str)
+info_parser.add_argument('GEOMCENTROID', default="false", type=str)
 info_parser.add_argument('with_htmlcontent', default="true", type=str)
 
 
