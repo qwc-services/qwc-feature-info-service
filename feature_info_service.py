@@ -227,6 +227,7 @@ class FeatureInfoService():
         layerattribsfilter = params.get('LAYERATTRIBS', '')
         geomcentroid = params.get('GEOMCENTROID', "false").lower() in ["true", "1"]
         with_htmlcontent = params.get('with_htmlcontent', "true").lower() in ["true", "1"]
+        with_bbox = params.get('with_bbox', "true").lower() in ["true", "1"]
 
         if 'LAYERATTRIBS' in params:
             del params['LAYERATTRIBS']
@@ -234,6 +235,8 @@ class FeatureInfoService():
             del params['GEOMCENTROID']
         if 'with_htmlcontent' in params:
             del params['with_htmlcontent']
+        if 'with_bbox' in params:
+            del params['with_bbox']
 
         # get layer permissions
         layer_permissions = self.layer_permissions(
@@ -408,11 +411,12 @@ class FeatureInfoService():
                     "type": "Point",
                     "coordinates": geom_center(gj["type"], gj["coordinates"])
                 })
+                bbox = None
 
             features.append({
                 'fid': fid,
                 'html_content': self.html_content(info_html) if with_htmlcontent else "",
-                'bbox': bbox,
+                'bbox': bbox if with_bbox else None,
                 'wkt_geom': geometry,
                 'attributes': attributes
             })

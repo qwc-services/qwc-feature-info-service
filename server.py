@@ -65,6 +65,7 @@ info_parser.add_argument('FI_POLYGON_TOLERANCE', default=4, type=int)
 info_parser.add_argument('LAYERATTRIBS', default="", type=str)
 info_parser.add_argument('GEOMCENTROID', default="false", type=str)
 info_parser.add_argument('with_htmlcontent', default="true", type=str)
+info_parser.add_argument('with_bbox', default="true", type=str)
 
 
 # routes
