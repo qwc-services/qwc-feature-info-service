@@ -98,6 +98,7 @@ class FeatureInfoService():
             'default_qgis_server_url', 'http://localhost:8001/ows/')
         self.data_service_url = config.get(
             'data_service_url', '/api/v1/data/').rstrip('/') + '/'
+        self.transform_image_urls = config.get('transform_image_urls', True)
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
@@ -486,17 +487,28 @@ class FeatureInfoService():
             if htmlEscape:
                 value = html.escape(value)
             value = value.replace("\n", "<br />")
-            rules = [(
-                # HTML links
+            rules = []
+
+            if self.transform_image_urls:
+                # Images
+                rules.append((
+                    r'^(https?:\/\/.*\.(jpg|jpeg|png|bmp))$',
+                    lambda m: m.expand(r'<a href="\1" target="_blank"><img src="\1" /></a>')
+                ))
+
+            # HTML links
+            rules.append((
                 r'^(https?:\/\/.*)$',
                 lambda m: m.expand(r'<a href="\1" target="_blank">Link</a>')
-            ),(
-                # Attachments
+            ))
+            # Attachments
+            rules.append((
                 r'^attachment://(.+)/([^/]+)$',
                 lambda m: m.expand(r'<a href="\1/\2" target="_blank"><img src="\1/\2" alt="\2" style="width: 100%" /></a>')
-            )]
+            ))
+
             for rule in rules:
-                match = re.match(rule[0], value)
+                match = re.match(rule[0], value, re.IGNORECASE)
                 if match:
                     value = rule[1](match)
                     break
