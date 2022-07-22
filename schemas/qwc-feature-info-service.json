@@ -36,6 +36,10 @@
         "data_service_url": {
           "description": "Data service URL",
           "type": "string"
+        },
+        "transform_image_urls": {
+          "description": "Transform image URLs to inline images",
+          "type": "boolean"
         }
       }
     },
