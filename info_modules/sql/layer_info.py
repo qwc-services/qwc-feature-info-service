@@ -39,10 +39,11 @@ def layer_info(layer, x, y, crs, params, identity, db_engine, database, sql,
             srid = int(srid)
         except Exception as e:
             srid = 2056
+        filter_geom = params.get('filter_geom', "")
         sql_params.update({
             'x': x,
             'y': y,
-            'geom': params.get('filter_geom', 'POINT({x} {y})'.format(x=x, y=y)),
+            'geom': filter_geom or 'POINT({x} {y})'.format(x=x, y=y),
             'srid': srid
         })
         result = conn.execute(sql_text(sql), **sql_params)
