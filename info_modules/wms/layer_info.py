@@ -24,9 +24,9 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
     """Forward query to WMS server and return parsed info result.
 
     :param str layer: Layer name
-    :param float x: X coordinate of query
-    :param float y: Y coordinate of query
-    :param str crs: CRS of query coordinates
+    :param float x: X coordinate of query [unused]
+    :param float y: Y coordinate of query [unused]
+    :param str crs: CRS of query coordinates [unused]
     :param obj params: FeatureInfo service params
     :param str identity: User name or Identity dict
     :param str wms_url: WMS URL
@@ -36,14 +36,24 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
     :param bool forward_auth_headers: Whether to forward authorization headers
     :param Logger logger: Application logger
     """
-    features = []
+    response = fetch_layer_infos(
+        layer, params, identity, wms_url, forward_auth_headers, logger
+    )
+    if 'error' in response:  # Error
+        return response
+    return parse_layer_info(response, layer, permitted_attributes,
+                            attribute_aliases, attribute_formats, logger)
 
+
+def fetch_layer_infos(layers, params, identity, wms_url, forward_auth_headers, logger):
+    """Forward query to WMS server and return result as mapping {layer_name: xml_item}.
+
+    :param str layers: Layer names, as comma-separated strings
+    :param obj params: FeatureInfo service params
+    :param str identity: User name or Identity dict
+    :param str wms_url: WMS URL
+    """
     try:
-        # reverse lookup for attribute names from alias
-        alias_attributes = {}
-        for name, alias in attribute_aliases.items():
-            alias_attributes[alias] = name
-
         headers = {}
         if forward_auth_headers:
             # forward any authorization headers
@@ -59,12 +69,12 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
             'version': '1.3.0',
             'request': 'GetFeatureInfo',
             'info_format': 'text/xml',
-            'layers': layer,
-            'query_layers': layer
+            'layers': layers,
+            'query_layers': layers
         })
 
-        if layer in THROTTLE_LAYERS:
-            logger.info("Defer layer %s for %fs" % (layer, THROTTLE_TIME))
+        if any(layer in THROTTLE_LAYERS for layer in layers.split(',')):
+            logger.info("Defer layers %s for %fs" % (layers, THROTTLE_TIME))
             time.sleep(THROTTLE_TIME)
 
         logger.info(
@@ -75,10 +85,41 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
         response = requests.get(
             wms_url, params=wms_params, headers=headers, timeout=10
         )
+        document = parseString(response.content.decode())
+        return {
+            layerEl.getAttribute('name'): layerEl
+            for layerEl in document.getElementsByTagName('Layer')
+        }
+    except Exception:
+        msg = "Exception for layers '%s':\n%s" % (layers, traceback.format_exc())
+        logger.error(msg)
+        return {
+            'error': msg
+        }
+
+
+def parse_layer_info(response, layer, permitted_attributes,
+                     attribute_aliases, attribute_formats, logger):
+    """Parse info result to extract required layer.
+
+    :param str response: Server response, as mapping {layer_name: xml_element}
+    :param str layer: Layer name
+    :param list(str) permitted_attributes: Ordered list of permitted attributes
+    :param obj attribute_aliases: Lookup for attribute aliases
+    :param obj attribute_formats: Lookup for attribute formats
+    :param Logger logger: Application logger
+    """
+    features = []
+
+    try:
+        # reverse lookup for attribute names from alias
+        alias_attributes = {}
+        for name, alias in attribute_aliases.items():
+            alias_attributes[alias] = name
 
         # parse GetFeatureInfo response
-        document = parseString(response.content.decode())
-        for layerEl in document.getElementsByTagName('Layer'):
+        layerEl = response.get(layer)
+        if layerEl:
             featureEls = layerEl.getElementsByTagName("Feature")
             if len(featureEls) > 0:
                 # vector layer
@@ -163,7 +204,7 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                     'attributes': attributes
                 })
 
-    except Exception as e:
+    except Exception:
         msg = "Exception for layer '%s':\n%s" % (layer, traceback.format_exc())
         logger.error(msg)
         return {

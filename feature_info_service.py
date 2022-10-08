@@ -14,8 +14,9 @@ from qwc_services_core.database import DatabaseEngine
 from qwc_services_core.permissions_reader import PermissionsReader
 from qwc_services_core.runtime_config import RuntimeConfig
 
+from info_modules.wms.layer_info import fetch_layer_infos as fetch_wms_layer_infos
+from info_modules.wms.layer_info import parse_layer_info as parse_wms_layer_info
 from info_modules.sql import layer_info as sql_layer_info
-from info_modules.wms import layer_info as wms_layer_info
 from info_templates import default_info_template, layer_template
 
 
@@ -124,7 +125,7 @@ class FeatureInfoService():
             y = 0.5 * (bbox[1] + bbox[3])
             xres = (bbox[2] - bbox[0]) / params['width']
             yres = (bbox[3] - bbox[1]) / params['height']
-        except Exception as e:
+        except Exception:
             x = 0
             y = 0
             xres = 0
@@ -141,6 +142,7 @@ class FeatureInfoService():
         expanded_layers = self.expand_group_layers(
             layers, group_layers, permitted_layers
         )
+        self.prefetch_wms_layers(service_name, expanded_layers, params, identity)
 
         # collect layer infos
         layer_infos = []
@@ -150,6 +152,8 @@ class FeatureInfoService():
             )
             if info is not None:
                 layer_infos.append(info)
+
+        del self._wms_cache
 
         info_xml = (
             "<GetFeatureInfoResponse>%s</GetFeatureInfoResponse>" %
@@ -198,6 +202,43 @@ class FeatureInfoService():
                     expanded_layers.append(layer)
 
         return expanded_layers
+
+    def prefetch_wms_layers(self, service_name, expanded_layers, params, identity):
+        wms_layers = {}
+        for layer in expanded_layers:
+            config = self.resources['wms_services'][service_name]['layers'][layer]
+            info_template = config.get('info_template') or {}
+            # TODO: maybe permissions
+            if info_template.get('type', 'wms') == 'wms':
+                wms_url = info_template.get('wms_url')
+                wms_layers.setdefault(wms_url, []).append(layer)
+
+        responses = {}
+        default_wms_url = urljoin(self.default_wms_url, service_name)
+        for url, layers_list in wms_layers.items():
+            responses[tuple(layers_list)] = fetch_wms_layer_infos(
+                layers=','.join(layers_list),
+                params=params,
+                identity=identity,
+                wms_url=url or default_wms_url,
+                forward_auth_headers=not url,
+                logger=self.logger
+            )
+
+        self._wms_cache = {
+            layer: response
+            for layers, response in responses.items()
+            for layer in layers
+        }
+
+    def get_wms_layer_info(
+        self, layer, params, identity, permitted_attributes, attribute_aliases,
+        attribute_formats, service_name, info_template
+    ):
+        return parse_wms_layer_info(
+            self._wms_cache[layer], layer, permitted_attributes,
+            attribute_aliases, attribute_formats, self.logger
+        )
 
     def get_layer_info(self, identity, service_name, layer, x, y, crs, params):
         """Get info for a layer rendered as info template.
@@ -263,18 +304,9 @@ class FeatureInfoService():
         info_type = info_template.get('type')
         if info_type == 'wms':
             # WMS GetFeatureInfo
-            forward_auth_headers = False
-            if info_template.get('wms_url'):
-                # use layer specific WMS
-                wms_url = info_template.get('wms_url')
-            else:
-                # use default WMS
-                wms_url = urljoin(self.default_wms_url, service_name)
-                forward_auth_headers = True
-            info = wms_layer_info(
-                layer, x, y, crs, params, identity, wms_url,
-                permitted_attributes, attribute_aliases, attribute_formats,
-                forward_auth_headers, self.logger
+            info = self.get_wms_layer_info(
+                layer, params, identity, permitted_attributes, attribute_aliases,
+                attribute_formats, service_name, info_template,
             )
         elif info_type == 'sql':
             # DB query
