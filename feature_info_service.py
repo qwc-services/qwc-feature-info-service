@@ -206,9 +206,10 @@ class FeatureInfoService():
     def prefetch_wms_layers(self, service_name, expanded_layers, params, identity):
         wms_layers = {}
         for layer in expanded_layers:
-            config = self.resources['wms_services'][service_name]['layers'][layer]
-            info_template = config.get('info_template') or {}
-            # TODO: maybe permissions
+            permissions = self.layer_permissions(service_name, layer, identity)
+            info_template = self._get_layer_info_template(
+                service_name, permissions, layer
+            )
             if info_template.get('type', 'wms') == 'wms':
                 wms_url = info_template.get('wms_url')
                 wms_layers.setdefault(wms_url, []).append(layer)
@@ -238,41 +239,19 @@ class FeatureInfoService():
             attribute_aliases, attribute_formats, self.logger
         )
 
-    def get_layer_info(self, identity, service_name, layer, x, y, crs, params):
-        """Get info for a layer rendered as info template.
+    def _get_layer_info_template(self, service_name, permissions, layer):
+        """Get ``info_template`` for layer.
 
-        :param str identity: User identity
         :param str service_name: Service name
+        :param dict permissions: Permissions dict as from self.layer_permissions
         :param str layer: Layer name
-        :param float x: X coordinate of query
-        :param float y: Y coordinate of query
-        :param str crs: CRS of query coordinates
-        :param obj params: FeatureInfo service params
         """
-        # get layer config
         config = self.resources['wms_services'][service_name]['layers'][layer]
-        layer_title = config.get('title')
         info_template = config.get('info_template')
-        attributes = config.get('attributes', [])
-        attribute_aliases = config.get('attribute_aliases', {})
-        attribute_formats = config.get('attribute_formats', {})
-        json_attribute_aliases = config.get('json_attribute_aliases', {})
-        display_field = config.get('display_field')
-        feature_report = config.get('feature_report')
-        parent_facade = config.get('parent_facade')
-
-        # get layer permissions
-        layer_permissions = self.layer_permissions(
-            service_name, layer, identity
-        )
 
         # filter by permissions
-        if not layer_permissions['info_template']:
+        if not permissions['info_template']:
             info_template = None
-        permitted_attributes = [
-            attr for attr in attributes
-            if attr in layer_permissions['attributes']
-        ]
 
         if info_template and not info_template.get('template'):
             # use any Base64 encoded info template
@@ -295,6 +274,44 @@ class FeatureInfoService():
             )
             # use default info template if not specified in config
             info_template['template'] = self.default_info_template
+
+        return info_template
+
+    def get_layer_info(self, identity, service_name, layer, x, y, crs, params):
+        """Get info for a layer rendered as info template.
+
+        :param str identity: User identity
+        :param str service_name: Service name
+        :param str layer: Layer name
+        :param float x: X coordinate of query
+        :param float y: Y coordinate of query
+        :param str crs: CRS of query coordinates
+        :param obj params: FeatureInfo service params
+        """
+        # get layer config
+        config = self.resources['wms_services'][service_name]['layers'][layer]
+        layer_title = config.get('title')
+        attributes = config.get('attributes', [])
+        attribute_aliases = config.get('attribute_aliases', {})
+        attribute_formats = config.get('attribute_formats', {})
+        json_attribute_aliases = config.get('json_attribute_aliases', {})
+        display_field = config.get('display_field')
+        feature_report = config.get('feature_report')
+        parent_facade = config.get('parent_facade')
+
+        # get layer permissions
+        layer_permissions = self.layer_permissions(
+            service_name, layer, identity
+        )
+
+        info_template = self._get_layer_info_template(
+            service_name, layer_permissions, layer
+        )
+
+        permitted_attributes = [
+            attr for attr in attributes
+            if attr in layer_permissions['attributes']
+        ]
 
         info = None
         error_msg = None
