@@ -228,7 +228,6 @@ class FeatureInfoService():
             )
 
         self._wms_cache = responses
-        self.logger.debug(self._wms_cache)
 
     def get_wms_layer_info(
         self, layer, params, identity, permitted_attributes, attribute_aliases,
