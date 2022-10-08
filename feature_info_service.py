@@ -216,27 +216,26 @@ class FeatureInfoService():
         responses = {}
         default_wms_url = urljoin(self.default_wms_url, service_name)
         for url, layers_list in wms_layers.items():
-            responses[tuple(layers_list)] = fetch_wms_layer_infos(
-                layers=','.join(layers_list),
-                params=params,
-                identity=identity,
-                wms_url=url or default_wms_url,
-                forward_auth_headers=not url,
-                logger=self.logger
+            responses.update(
+                fetch_wms_layer_infos(
+                    layers=','.join(layers_list),
+                    params=params,
+                    identity=identity,
+                    wms_url=url or default_wms_url,
+                    forward_auth_headers=not url,
+                    logger=self.logger
+                )
             )
 
-        self._wms_cache = {
-            layer: response
-            for layers, response in responses.items()
-            for layer in layers
-        }
+        self._wms_cache = responses
+        self.logger.debug(self._wms_cache)
 
     def get_wms_layer_info(
         self, layer, params, identity, permitted_attributes, attribute_aliases,
         attribute_formats, service_name, info_template
     ):
         return parse_wms_layer_info(
-            self._wms_cache[layer], layer, permitted_attributes,
+            self._wms_cache.get(layer), permitted_attributes,
             attribute_aliases, attribute_formats, self.logger
         )
 

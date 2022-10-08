@@ -41,14 +41,14 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
     )
     if 'error' in response:  # Error
         return response
-    return parse_layer_info(response, layer, permitted_attributes,
+    return parse_layer_info(response.get(layer), permitted_attributes,
                             attribute_aliases, attribute_formats, logger)
 
 
 def fetch_layer_infos(layers, params, identity, wms_url, forward_auth_headers, logger):
     """Forward query to WMS server and return result as mapping {layer_name: xml_item}.
 
-    :param str layers: Layer names, as comma-separated strings
+    :param str layers: Layer names, as comma-separated string
     :param obj params: FeatureInfo service params
     :param str identity: User name or Identity dict
     :param str wms_url: WMS URL
@@ -98,11 +98,11 @@ def fetch_layer_infos(layers, params, identity, wms_url, forward_auth_headers, l
         }
 
 
-def parse_layer_info(response, layer, permitted_attributes,
+def parse_layer_info(layer_tag, permitted_attributes,
                      attribute_aliases, attribute_formats, logger):
     """Parse info result to extract required layer.
 
-    :param str response: Server response, as mapping {layer_name: xml_element}
+    :param xml.dom.minidom.Element | None layer_tag: Server layer_tag for layer, <Layer>
     :param str layer: Layer name
     :param list(str) permitted_attributes: Ordered list of permitted attributes
     :param obj attribute_aliases: Lookup for attribute aliases
@@ -118,12 +118,11 @@ def parse_layer_info(response, layer, permitted_attributes,
             alias_attributes[alias] = name
 
         # parse GetFeatureInfo response
-        layerEl = response.get(layer)
-        if layerEl:
-            featureEls = layerEl.getElementsByTagName("Feature")
+        if layer_tag:
+            featureEls = layer_tag.getElementsByTagName("Feature")
             if len(featureEls) > 0:
                 # vector layer
-                for featureEl in layerEl.getElementsByTagName('Feature'):
+                for featureEl in layer_tag.getElementsByTagName('Feature'):
                     feature_id = featureEl.getAttribute('id')
                     attributes = []
                     bbox = None
@@ -185,12 +184,12 @@ def parse_layer_info(response, layer, permitted_attributes,
                             'bbox': bbox,
                             'geometry': geometry
                         })
-            elif len(layerEl.getElementsByTagName('Attribute')) > 0:
+            elif len(layer_tag.getElementsByTagName('Attribute')) > 0:
                 # raster layer (no features)
                 attributes = []
 
                 # parse attributes
-                for attrEl in layerEl.getElementsByTagName('Attribute'):
+                for attrEl in layer_tag.getElementsByTagName('Attribute'):
                     name = attrEl.getAttribute('name')
                     format = attribute_formats.get(name)
                     value = attrEl.getAttribute('value')
@@ -205,7 +204,9 @@ def parse_layer_info(response, layer, permitted_attributes,
                 })
 
     except Exception:
-        msg = "Exception for layer '%s':\n%s" % (layer, traceback.format_exc())
+        msg = "Exception for layer '%s':\n%s" % (
+            layer_tag.getAttribute('name'), traceback.format_exc()
+        )
         logger.error(msg)
         return {
             'error': msg
