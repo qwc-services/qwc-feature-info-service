@@ -9,7 +9,5 @@ RUN apk add --no-cache --update postgresql-dev gcc python3-dev musl-dev
 
 # maybe set locale here if needed
 
-COPY requirements.txt /srv/qwc_service/requirements.txt
-RUN pip3 install --no-cache-dir -r /srv/qwc_service/requirements.txt
-
 ADD . /srv/qwc_service
+RUN pip3 install --no-cache-dir -r /srv/qwc_service/requirements.txt
