@@ -72,6 +72,7 @@ info_parser.add_argument('with_bbox', default="true", type=str)
 @api.route('/<path:service_name>')
 @api.param('service_name', 'Service name corresponding to WMS, e.g. `qwc_demo`')
 class FeatureInfo(Resource):
+
     @api.doc('featureinfo')
     @api.param('layers', 'The layer names, e.g. `countries,edit_lines`')
     @api.param('i', 'X ordinate of query point on map, in pixels, e.g. `51`. '
@@ -96,16 +97,34 @@ class FeatureInfo(Resource):
     @api.expect(info_parser)
     @optional_auth
     def get(self, service_name):
-        """Submit query
-
+        """
         Return feature info for specified layers
         """
+        return self.__process_request(request.args, service_name)
+
+    @api.expect(info_parser)
+    @optional_auth
+    def post(self, service_name):
+        """
+        Return feature info for specified layers
+        """
+        return self.__process_request(request.values, service_name)
+
+    def __process_request(self, args, service_name):
+        """
+        Process a feature info request
+
+        :param list args: The full query, passed either as GET querystring or POST formdata
+        :param str service_name: The OGC service name
+        """
+
+        # Params from the info_parser RequestParser
         params = info_parser.parse_args()
 
-        # Extra args
-        for arg in request.args:
+        # Add extra arguments not handled by info_parser
+        for arg in args:
             if not arg in params:
-                params[arg] = request.args[arg]
+                params[arg] = args[arg]
 
         layers = params['layers'].split(',')
 
