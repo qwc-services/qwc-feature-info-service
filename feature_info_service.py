@@ -404,6 +404,8 @@ class FeatureInfoService():
                 filterobj = json.loads(layerattribsfilter)
                 if layer in filterobj:
                     keep_attrs = filterobj[layer]
+                    if display_field:
+                        keep_attrs.append(display_field)
                     attributes = list(filter(lambda entry: entry['name'] in keep_attrs, attributes))
 
             if geomcentroid and geometry:
