@@ -40,6 +40,14 @@
         "transform_image_urls": {
           "description": "Transform image URLs to inline images",
           "type": "boolean"
+        },
+        "skip_empty_attributes": {
+          "description": "Whether to skip empty feature attributes in WMS GetFeatureInfo responses (default: false)",
+          "type": "boolean"
+        },
+        "use_permission_attribute_order": {
+          "description": " Whether to order the attributes according to order of the permitted attribute names in WMS GetFeatureInfo responses, rather than the order returned by WMS GetFeatureInfo (default: false)",
+          "type": "boolean"
         }
       }
     },

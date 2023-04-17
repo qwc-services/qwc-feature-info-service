@@ -48,11 +48,6 @@ Configuration
 The static config and permission files are stored as JSON files in `$CONFIG_PATH` with subdirectories for each tenant,
 e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 
-Environment variables:
-
-- `SKIP_EMPTY_ATTRIBUTES=<boolean>`: Whether to skip empty featureinfo attributes returned by WMS GetFeatureInfo.
-- `USE_PERMISSION_ATTRIBUTE_ORDER=<boolean>`: Whether to order the attributes according to order of the permitted attribute names, rather than the order returned by WMS GetFeatureInfo.
-
 ### FeatureInfo Service config
 
 * [JSON schema](schemas/qwc-feature-info-service.json)

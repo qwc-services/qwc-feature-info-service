@@ -14,13 +14,12 @@ from xml.dom.minidom import parseString
 
 THROTTLE_LAYERS = os.environ.get('THROTTLE_LAYERS', '').split(',')
 USE_PERMISSION_ATTRIBUTE_ORDER = os.environ.get('USE_PERMISSION_ATTRIBUTE_ORDER', '0') not in [0, "0", "False", "FALSE"]
-SKIP_EMPTY_ATTRIBUTES = os.environ.get('SKIP_EMPTY_ATTRIBUTES', '0') not in [0, "0", "False", "FALSE"]
 THROTTLE_TIME = 1.5
 
 
 def layer_info(layer, x, y, crs, params, identity, wms_url,
                permitted_attributes, attribute_aliases, attribute_formats,
-               forward_auth_headers, logger):
+               forward_auth_headers, logger, config):
     """Forward query to WMS server and return parsed info result.
 
     :param str layer: Layer name
@@ -35,6 +34,7 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
     :param obj attribute_formats: Lookup for attribute formats
     :param bool forward_auth_headers: Whether to forward authorization headers
     :param Logger logger: Application logger
+    :param obj config: Info module configuration
     """
     features = []
 
@@ -76,6 +76,9 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
             wms_url, params=wms_params, headers=headers, timeout=10
         )
 
+        skip_empty_attributes = config.get('skip_empty_attributes', False)
+        use_permission_attribute_order = config.get('use_permission_attribute_order', False)
+
         # parse GetFeatureInfo response
         document = parseString(response.content.decode())
         for layerEl in document.getElementsByTagName('Layer'):
@@ -98,7 +101,7 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                         if name in permitted_attributes:
                             # add permitted attribute
                             value = attrEl.getAttribute('value')
-                            if value in ["", "NULL", "null"] and SKIP_EMPTY_ATTRIBUTES:
+                            if value in ["", "NULL", "null"] and skip_empty_attributes:
                                 continue
                             elif (name == 'geometry' and
                                     attrEl.getAttribute('type') == 'derived'):
@@ -106,7 +109,7 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
                             else:
                                 info_attributes[name] = value
 
-                    if USE_PERMISSION_ATTRIBUTE_ORDER:
+                    if use_permission_attribute_order:
                         # add info attributes in order of permitted_attributes
                         for name in permitted_attributes:
                             if name in info_attributes:

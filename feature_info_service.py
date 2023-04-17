@@ -99,6 +99,8 @@ class FeatureInfoService():
         self.data_service_url = config.get(
             'data_service_url', '/api/v1/data/').rstrip('/') + '/'
         self.transform_image_urls = config.get('transform_image_urls', True)
+        self.skip_empty_attributes = config.get('skip_empty_attributes', False)
+        self.use_permission_attribute_order = config.get('use_permission_attribute_order', False)
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
@@ -297,10 +299,14 @@ class FeatureInfoService():
                 # use default WMS
                 wms_url = urljoin(self.default_wms_url, service_name)
                 forward_auth_headers = True
+            wms_module_config = {
+                "skip_empty_attributes": self.skip_empty_attributes,
+                "use_permission_attribute_order": self.use_permission_attribute_order
+            }
             info = wms_layer_info(
                 layer, x, y, crs, params, identity, wms_url,
                 permitted_attributes, attribute_aliases, attribute_formats,
-                forward_auth_headers, self.logger
+                forward_auth_headers, self.logger, wms_module_config
             )
         elif info_type == 'sql':
             # DB query
