@@ -53,6 +53,8 @@ e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 * [JSON schema](schemas/qwc-feature-info-service.json)
 * File location: `$CONFIG_PATH/<tenant>/featureInfoConfig.json`
 
+Note: Use the `qwc-config-generator` to automatically generate the resource configuration. Manually provided configuration is merged into the automatically generated configuration by service and layer name. I.e. the configuration for `countries` in the example below just specifies the info template, attributes configuration will completed by the config generator.
+
 Example:
 ```json
 {
@@ -116,29 +118,6 @@ Example:
             },
             {
               "name": "countries",
-              "title": "Countries",
-              "attributes": [
-                {
-                  "name": "name",
-                  "alias": "Name"
-                },
-                {
-                  "name": "formal_en",
-                  "alias": "Formal name"
-                },
-                {
-                  "name": "pop_est",
-                  "alias": "Population"
-                },
-                {
-                  "name": "subregion",
-                  "alias": "Subregion"
-                },
-                {
-                  "name": "geometry"
-                }
-              ],
-              "display_field": "name",
               "info_template": {
                 "type": "wms",
                 "wms_url": "http://localhost:8001/ows/qwc_demo",
@@ -159,6 +138,15 @@ Example `info_template` for WMS GetFeatureInfo:
   "type": "wms",
   "wms_url": "http://localhost:8001/ows/qwc_demo",
   "template": "<div><h2>Demo Template</h2>Pos: {{ x }}, {{ y }}<br>Name: {{ feature.Name }}</div>"
+}
+```
+
+Example `info_template` for WMS GetFeatureInfo with template path:
+```json
+"info_template": {
+  "type": "wms",
+  "wms_url": "http://localhost:8001/ows/qwc_demo",
+  "template_path": "/info_templates/template.html"
 }
 ```
 
