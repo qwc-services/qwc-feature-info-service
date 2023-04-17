@@ -229,6 +229,10 @@
           "description": "HTML template for info result",
           "type": "string"
         },
+        "template_path": {
+          "description": "Path to HTML template for info result",
+          "type": "string"
+        },
         "template_base64": {
           "description": "HTML template for info result, in Base64 encoding",
           "type": "string",
@@ -263,6 +267,10 @@
         },
         "template": {
           "description": "HTML template for info result",
+          "type": "string"
+        },
+        "template_path": {
+          "description": "Path to HTML template for info result",
           "type": "string"
         },
         "template_base64": {
@@ -303,6 +311,10 @@
         },
         "template": {
           "description": "HTML template for info result",
+          "type": "string"
+        },
+        "template_path": {
+          "description": "Path to HTML template for info result.",
           "type": "string"
         },
         "template_base64": {

@@ -259,6 +259,15 @@ class FeatureInfoService():
                     info_template.get('template_base64'), None,
                     "info template of layer '%s'" % layer
                 )
+            elif info_template.get('template_path'):
+                try:
+                    with open(info_template.get('template_path'), 'r') as fh:
+                        info_template['template'] = fh.read()
+                except:
+                    self.logger.warning(
+                        "Failed to read template from path %s"
+                        % info_template.get('template_path')
+                    )
 
         if info_template is None:
             self.logger.info("No info template for layer '%s'" % layer)
