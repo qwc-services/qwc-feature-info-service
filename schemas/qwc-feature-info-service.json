@@ -24,6 +24,10 @@
           "description": "Default HTML info template",
           "type": "string"
         },
+        "default_info_template_path": {
+          "description": "Default HTML info template path",
+          "type": "string"
+        },
         "default_info_template_base64": {
           "description": "Default HTML info template in Base64 encoding",
           "type": "string",

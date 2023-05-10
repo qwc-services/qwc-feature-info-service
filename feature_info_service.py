@@ -86,6 +86,15 @@ class FeatureInfoService():
 
         if config.get('default_info_template'):
             self.default_info_template = config.get('default_info_template')
+        elif config.get('default_info_template_path'):
+            try:
+                with open(config.get('default_info_template_path'), 'r') as fh:
+                    self.default_info_template = fh.read()
+            except:
+                self.logger.warning(
+                    "Failed to read default template from path %s"
+                    % config.get('default_info_template_path')
+                )
         elif config.get('default_info_template_base64'):
             self.default_info_template = self.b64decode(
                 config.get('default_info_template_base64'),
