@@ -1,5 +1,5 @@
 # Ubuntu image has locales, which we want e.g. for psql client_encoding or info formatting
-FROM sourcepole/qwc-uwsgi-base:ubuntu-v2023.05.12
+FROM sourcepole/qwc-uwsgi-base:ubuntu-v2023.06.07
 
 ADD . /srv/qwc_service
 
