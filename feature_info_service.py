@@ -255,6 +255,10 @@ class FeatureInfoService():
             service_name, layer, identity
         )
 
+        if not layer_permissions['queryable']:
+            # layer is not queryable
+            return None
+
         # filter by permissions
         if not layer_permissions['info_template']:
             info_template = None
@@ -717,6 +721,7 @@ class FeatureInfoService():
         # combine permissions
         permitted_attributes = set()
         info_template_permitted = False
+        queryable = False
         for permission in wms_permissions:
             # find requested layer
             for l in permission['layers']:
@@ -724,11 +729,12 @@ class FeatureInfoService():
                     # found matching layer
                     permitted_attributes.update(l.get('attributes', []))
                     info_template_permitted |= l.get('info_template', False)
-                    break
+                    queryable |= l.get('queryable', True)
 
         return {
             'attributes': sorted(list(permitted_attributes)),
-            'info_template': info_template_permitted
+            'info_template': info_template_permitted,
+            'queryable': queryable
         }
 
     def b64decode(self, base64_value, default, description=""):
