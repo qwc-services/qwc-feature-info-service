@@ -730,6 +730,7 @@ class FeatureInfoService():
                     permitted_attributes.update(l.get('attributes', []))
                     info_template_permitted |= l.get('info_template', False)
                     queryable |= l.get('queryable', True)
+                    break
 
         return {
             'attributes': sorted(list(permitted_attributes)),
