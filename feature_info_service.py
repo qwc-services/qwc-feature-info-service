@@ -2,6 +2,7 @@ import base64
 from collections import OrderedDict
 import html
 from importlib import import_module
+import os
 import re
 import traceback
 from urllib.parse import urljoin
@@ -9,7 +10,7 @@ from xml.dom.minidom import Document, Element, Text
 from geomet import wkt
 
 from flask import json
-from jinja2 import Template, TemplateError, TemplateSyntaxError
+import jinja2
 
 from qwc_services_core.database import DatabaseEngine
 from qwc_services_core.permissions_reader import PermissionsReader
@@ -84,12 +85,14 @@ class FeatureInfoService():
         config_handler = RuntimeConfig("featureInfo", logger)
         config = config_handler.tenant_config(tenant)
 
+        self.default_info_template_dir = None
         if config.get('default_info_template'):
             self.default_info_template = config.get('default_info_template')
         elif config.get('default_info_template_path'):
             try:
                 with open(config.get('default_info_template_path'), 'r') as fh:
                     self.default_info_template = fh.read()
+                self.default_info_template_dir = os.path.dirname(config.get('default_info_template_path'))
             except:
                 self.logger.warning(
                     "Failed to read default template from path %s"
@@ -278,6 +281,7 @@ class FeatureInfoService():
                 try:
                     with open(info_template.get('template_path'), 'r') as fh:
                         info_template['template'] = fh.read()
+                    info_template['template_dir'] = os.path.dirname(info_template.get('template_path'))
                 except:
                     self.logger.warning(
                         "Failed to read template from path %s"
@@ -289,6 +293,7 @@ class FeatureInfoService():
             # fallback to WMS GetFeatureInfo with default info template
             info_template = {
                 'template': self.default_info_template,
+                'template_dir': self.default_info_template_dir,
                 'type': 'wms'
             }
         elif not info_template.get('template'):
@@ -387,6 +392,7 @@ class FeatureInfoService():
             )
 
         template = info_template.get('template')
+        template_dir = info_template.get('template_dir')
 
         features = []
         for feature in info.get('features'):
@@ -408,17 +414,19 @@ class FeatureInfoService():
             info_html = None
             try:
                 # render feature template
-                feature_template = Template(template)
+                templateLoader = jinja2.FileSystemLoader(searchpath=template_dir)
+                templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
+                feature_template = templateEnv.from_string(template)
                 info_html = feature_template.render(
                     feature=info_feature, fid=fid, bbox=bbox,
                     geometry=geometry, layer=layer, x=x, y=y, crs=crs,
                     render_value=self.render_value
                 )
-            except TemplateSyntaxError as e:
+            except jinja2.TemplateSyntaxError as e:
                 error_msg = (
                     "TemplateSyntaxError on line %d: %s" % (e.lineno, e)
                 )
-            except TemplateError as e:
+            except jinja2.TemplateError as e:
                 error_msg = "TemplateError: %s" % e
             if error_msg is not None:
                 self.logger.error(error_msg)
