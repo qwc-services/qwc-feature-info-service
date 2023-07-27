@@ -55,7 +55,7 @@ default_info_template = """
                                                         <i>{{ alias|e }}</i>
                                                     </td>
                                                     <td class="identify-attr-value wrap">
-                                                        {{ render_value(item[key]) }}
+                                                        {{ render_value(item[key])|safe }}
                                                     </td>
                                                 </tr>
                                             {% endif %}
@@ -63,7 +63,7 @@ default_info_template = """
                                     {%- else -%}
                                         <tr>
                                             <td class="identify-attr-value identify-attr-single-value wrap" colspan="2">
-                                                {{ render_value(item) }}
+                                                {{ render_value(item)|safe }}
                                             </td>
                                         </tr>
                                     {%- endif %}
@@ -89,7 +89,7 @@ default_info_template = """
                                         <i>{{ key|e }}</i>
                                     </td>
                                     <td class="identify-attr-value wrap">
-                                        {{ render_value(attr['value'][key]) }}
+                                        {{ render_value(attr['value'][key])|safe }}
                                     </td>
                                 </tr>
                             {%- endfor %}
@@ -105,7 +105,7 @@ default_info_template = """
                         <i>{{ attr['alias']|e }}</i>
                     </td>
                     <td class="identify-attr-value wrap">
-                        {{ render_value(attr['value']) }}
+                        {{ render_value(attr['value'])|safe }}
                     </td>
                 </tr>
             {%- endif %}
