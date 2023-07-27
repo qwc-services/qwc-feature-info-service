@@ -414,7 +414,9 @@ class FeatureInfoService():
             info_html = None
             try:
                 # render feature template
-                templateLoader = jinja2.FileSystemLoader(searchpath=template_dir)
+                templateLoader = None
+                if template_dir:
+                    templateLoader = jinja2.FileSystemLoader(searchpath=template_dir)
                 templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
                 feature_template = templateEnv.from_string(template)
                 info_html = feature_template.render(
