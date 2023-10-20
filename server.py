@@ -52,6 +52,7 @@ info_parser.add_argument('layers', required=True, type=str)
 info_parser.add_argument('i', type=int)
 info_parser.add_argument('j', type=int)
 info_parser.add_argument('bbox', type=str)
+info_parser.add_argument('filter', type=str)
 info_parser.add_argument('filter_geom', type=str)
 info_parser.add_argument('height', required=True, type=int)
 info_parser.add_argument('width', required=True, type=int)
@@ -76,11 +77,13 @@ class FeatureInfo(Resource):
     @api.doc('featureinfo')
     @api.param('layers', 'The layer names, e.g. `countries,edit_lines`')
     @api.param('i', 'X ordinate of query point on map, in pixels, e.g. `51`. '
-               'Required unless filter_geom is specified.')
+               'Required unless filter_geom or filter are specified.')
     @api.param('j', 'Y ordinate of query point on map, in pixels, e.g. `51`. '
-               'Required unless filter_geom is specified.')
+               'Required unless filter_geom or filter are specified.')
+    @api.param('filter', 'Filter expression. '
+               'Can be specified instead of i and j.')
     @api.param('filter_geom', 'Filter geometry, as a WKT string. '
-               'Required unless i and j and bbox are specified.')
+               'Can be specified instead of i and j.')
     @api.param('height', 'Height of map output, in pixels, e.g. `101`')
     @api.param('width', 'Width of map output, in pixels, e.g. `101`')
     @api.param('bbox', 'Bounding box for map extent, '
@@ -128,14 +131,17 @@ class FeatureInfo(Resource):
 
         layers = params['layers'].split(',')
 
-        if 'filter_geom' in params and params['filter_geom']:
+        if 'filter' in params and params['filter']:
+            # OK
+            pass
+        elif 'filter_geom' in params and params['filter_geom']:
             # OK
             pass
         elif 'i' in params and params['i'] and 'j' in params and params['j'] and 'bbox' in params and params['bbox']:
             # OK
             pass
         else:
-            api.abort(404, "Either filter_geom, or i and j, are required")
+            api.abort(404, "Either filter, filter_geom, or i and j, are required")
 
         info_service = info_service_handler()
         result = info_service.query(
