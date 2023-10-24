@@ -1,5 +1,5 @@
 # Ubuntu image has locales, which we want e.g. for psql client_encoding or info formatting
-FROM sourcepole/qwc-uwsgi-base:ubuntu-v2023.06.08
+FROM sourcepole/qwc-uwsgi-base:ubuntu-v2023.10.24
 
 ADD . /srv/qwc_service
 
@@ -14,7 +14,3 @@ RUN \
     rm -rf /var/lib/apt/lists/*
 
 ENV SERVICE_MOUNTPOINT=/api/v1/feature-info
-
-# Default locale is en_US.utf8
-# RUN localedef -i de_CH -c -f UTF-8 -A /usr/share/locale/locale.alias de_CH.UTF-8
-# ENV LANG de_CH.utf8
