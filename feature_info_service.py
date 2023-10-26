@@ -8,6 +8,7 @@ import traceback
 from urllib.parse import urljoin
 from xml.dom.minidom import Document, Element, Text
 from geomet import wkt
+import locale
 
 from flask import json
 import jinja2
@@ -422,7 +423,8 @@ class FeatureInfoService():
                 info_html = feature_template.render(
                     feature=info_feature, fid=fid, bbox=bbox,
                     geometry=geometry, layer=layer, x=x, y=y, crs=crs,
-                    render_value=self.render_value
+                    render_value=self.render_value,
+                    locale=locale
                 )
             except jinja2.TemplateSyntaxError as e:
                 error_msg = (
