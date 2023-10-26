@@ -124,6 +124,14 @@ class FeatureInfo(Resource):
         # Params from the info_parser RequestParser
         params = info_parser.parse_args()
 
+        # Remove None entries, else they will get encoded as 'None' string values
+        # by urlencode when constructing the request
+        # https://bugs.python.org/issue18857
+        params = {
+            key: value for key, value in params.items()
+            if value is not None
+        }
+
         # Add extra arguments not handled by info_parser
         for arg in args:
             if not arg in params:
