@@ -582,7 +582,8 @@ class FeatureInfoService():
             # collect map layers
             layers = {}
             group_layers = {}
-            self.collect_layers(wms['root_layer'], layers, group_layers)
+            if wms['root_layer'] is not None:
+                self.collect_layers(wms['root_layer'], layers, group_layers)
 
             wms_services[wms['name']] = {
                 'layers': layers,
