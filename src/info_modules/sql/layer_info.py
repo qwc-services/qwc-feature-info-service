@@ -46,7 +46,7 @@ def layer_info(layer, x, y, crs, params, identity, db_engine, database, sql,
             'geom': filter_geom or 'POINT({x} {y})'.format(x=x, y=y),
             'srid': srid
         })
-        result = conn.execute(sql_text(sql), sql_params).mapping()
+        result = conn.execute(sql_text(sql), sql_params).mappings()
         for row in result:
             feature_id = 0
             attributes = []
