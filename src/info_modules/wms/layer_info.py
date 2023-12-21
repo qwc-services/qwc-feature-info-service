@@ -17,12 +17,13 @@ USE_PERMISSION_ATTRIBUTE_ORDER = os.environ.get('USE_PERMISSION_ATTRIBUTE_ORDER'
 THROTTLE_TIME = 1.5
 
 
-def layer_info(layer, x, y, crs, params, identity, wms_url,
+def layer_info(layer, style, x, y, crs, params, identity, wms_url,
                permitted_attributes, attribute_aliases, attribute_formats,
                forward_auth_headers, logger, config):
     """Forward query to WMS server and return parsed info result.
 
     :param str layer: Layer name
+    :param str style: Style name
     :param float x: X coordinate of query
     :param float y: Y coordinate of query
     :param str crs: CRS of query coordinates
@@ -60,6 +61,7 @@ def layer_info(layer, x, y, crs, params, identity, wms_url,
             'request': 'GetFeatureInfo',
             'info_format': 'text/xml',
             'layers': layer,
+            'styles': style,
             'query_layers': layer
         })
 

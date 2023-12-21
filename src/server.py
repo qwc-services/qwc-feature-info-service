@@ -49,6 +49,7 @@ def info_service_handler():
 # request parser
 info_parser = reqparse.RequestParser(argument_class=CaseInsensitiveArgument)
 info_parser.add_argument('layers', required=True, type=str)
+info_parser.add_argument('styles', type=str)
 info_parser.add_argument('i', type=int)
 info_parser.add_argument('j', type=int)
 info_parser.add_argument('bbox', type=str)
@@ -76,6 +77,7 @@ class FeatureInfo(Resource):
 
     @api.doc('featureinfo')
     @api.param('layers', 'The layer names, e.g. `countries,edit_lines`')
+    @api.param('styles', 'The layer style')
     @api.param('i', 'X ordinate of query point on map, in pixels, e.g. `51`. '
                'Required unless filter_geom or filter are specified.')
     @api.param('j', 'Y ordinate of query point on map, in pixels, e.g. `51`. '
