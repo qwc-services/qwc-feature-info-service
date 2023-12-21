@@ -75,7 +75,7 @@ def layer_info(layer, style, x, y, crs, params, identity, wms_url,
         )
 
         response = requests.get(
-            wms_url, params=wms_params, headers=headers, timeout=20
+            wms_url, params=wms_params, headers=headers, timeout=30
         )
 
         skip_empty_attributes = config.get('skip_empty_attributes', False)
