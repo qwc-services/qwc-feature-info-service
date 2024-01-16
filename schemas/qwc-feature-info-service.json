@@ -75,7 +75,8 @@
                 "description": "Root layer of WMS (layer or group layer)",
                 "oneOf": [
                   {"$ref": "#/definitions/layer"},
-                  {"$ref": "#/definitions/group_layer"}
+                  {"$ref": "#/definitions/group_layer"},
+                  {"type": "null"}
                 ]
               }
             },
