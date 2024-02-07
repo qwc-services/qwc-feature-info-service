@@ -4,7 +4,7 @@ from jinja2 import Template
 # template for GetFeatureInfoResponse <Layer> tag
 layer_template = Template("""
     <Layer name="{{ layer_title|e }}" layername="{{ layer_name|e }}"
-        {{ 'layerinfo="%s"' | format(parent_facade if parent_facade else layer_name) }}
+        layerinfo="{{ (parent_facade if parent_facade else layer_name)|e }}"
         {{ 'featurereport="%s"' | format(feature_report) if feature_report }}
         {{ 'displayfield="%s"' | format(display_field) if display_field }}>
         {%- for feature in features %}
