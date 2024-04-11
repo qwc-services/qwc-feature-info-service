@@ -750,7 +750,10 @@ class FeatureInfoService():
             for l in permission['layers']:
                 if l['name'] == layer:
                     # found matching layer
-                    permitted_attributes.update(l.get('attributes', []))
+                    if 'info_attributes' in l:
+                        permitted_attributes.update(l.get('info_attributes', []))
+                    else:
+                        permitted_attributes.update(l.get('attributes', []))
                     info_template_permitted |= l.get('info_template', False)
                     queryable |= l.get('queryable', True)
                     break
