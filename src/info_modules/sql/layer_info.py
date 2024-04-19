@@ -28,50 +28,45 @@ def layer_info(layer, x, y, crs, params, identity, db_engine, database, sql,
             # fallback to default GeoDB
             db = db_engine.geo_db()
 
-        # connect to database and start transaction (for read-only access)
-        conn = db.connect()
-        trans = conn.begin()
+        # connect to database (for read-only access)
+        with db.connect() as conn:
 
-        # execute info query
-        sql_params = params.copy()
-        try:
-            srid = crs.split(':')[-1]
-            srid = int(srid)
-        except Exception as e:
-            srid = 2056
-        filter_geom = params.get('filter_geom', "")
-        sql_params.update({
-            'x': x,
-            'y': y,
-            'geom': filter_geom or 'POINT({x} {y})'.format(x=x, y=y),
-            'srid': srid
-        })
-        result = conn.execute(sql_text(sql), sql_params).mappings()
-        for row in result:
-            feature_id = 0
-            attributes = []
-            geometry = None
-
-            for key in row.keys():
-                if key == '_fid_':
-                    feature_id = row[key]
-                elif key == 'wkt_geom':
-                    geometry = row[key]
-                else:
-                    attributes.append({
-                        'name': key,
-                        'value': row[key]
-                    })
-
-            features.append({
-                'id': feature_id,
-                'attributes': attributes,
-                'geometry': geometry
+            # execute info query
+            sql_params = params.copy()
+            try:
+                srid = crs.split(':')[-1]
+                srid = int(srid)
+            except Exception as e:
+                srid = 2056
+            filter_geom = params.get('filter_geom', "")
+            sql_params.update({
+                'x': x,
+                'y': y,
+                'geom': filter_geom or 'POINT({x} {y})'.format(x=x, y=y),
+                'srid': srid
             })
+            result = conn.execute(sql_text(sql), sql_params).mappings()
+            for row in result:
+                feature_id = 0
+                attributes = []
+                geometry = None
 
-        # roll back transaction and close database connection
-        trans.rollback()
-        conn.close()
+                for key in row.keys():
+                    if key == '_fid_':
+                        feature_id = row[key]
+                    elif key == 'wkt_geom':
+                        geometry = row[key]
+                    else:
+                        attributes.append({
+                            'name': key,
+                            'value': row[key]
+                        })
+
+                features.append({
+                    'id': feature_id,
+                    'attributes': attributes,
+                    'geometry': geometry
+                })
 
     except Exception as e:
         logger.error(
