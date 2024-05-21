@@ -553,6 +553,11 @@ class FeatureInfoService():
                 r'^(https?:\/\/.*)$',
                 lambda m: m.expand(r'<a href="\1" target="_blank">Link</a>')
             ))
+            # E-Mails
+            rules.append((
+                r'^([\w\-\.]+@([\w-]+\.)+[\w-]{2,4})$',
+                lambda m: m.expand(r'<a href="mailto:\1">\1</a>')
+            ))
             # Attachments
             rules.append((
                 r'^attachment://(.+)/([^/]+)$',
