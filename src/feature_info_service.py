@@ -555,8 +555,8 @@ class FeatureInfoService():
             ))
             # E-Mails
             rules.append((
-                r'^([\w\-\.]+@([\w-]+\.)+[\w-]{2,4})$',
-                lambda m: m.expand(r'<a href="mailto:\1">\1</a>')
+                r'^(mailto:)?([\w\-\.]+@([\w-]+\.)+[\w-]{2,63})$',
+                lambda m: m.expand(r'<a href="mailto:\2">\2</a>')
             ))
             # Attachments
             rules.append((
