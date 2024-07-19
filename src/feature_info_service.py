@@ -214,7 +214,7 @@ class FeatureInfoService():
                             sublayers.append({'layer': sublayer, 'style': ''})
 
                     expanded_layers += self.expand_group_layers(
-                        sublayers, group_layers, permitted_layers
+                        sublayers, styles_param, group_layers, permitted_layers
                     )
                 else:
                     if i < len(requested_styles):
