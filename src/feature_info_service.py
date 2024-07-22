@@ -153,11 +153,12 @@ class FeatureInfoService():
 
         # filter layers by permissions and replace group layers
         # with permitted sublayers
+        requested_styles = params['styles'].split(",") if 'styles' in params else []
         permitted_layers = self.permitted_layers(service_name, identity)
         group_layers = \
             self.resources['wms_services'][service_name]['group_layers']
         expanded_layers = self.expand_group_layers(
-            layers, params.get('styles', ''), group_layers, permitted_layers
+            layers, requested_styles, group_layers, permitted_layers
         )
 
         # collect layer infos
@@ -188,39 +189,33 @@ class FeatureInfoService():
             % (code, message)
         )
 
-    def expand_group_layers(self, requested_layers, styles_param, group_layers,
+    def expand_group_layers(self, requested_layers, requested_styles, group_layers,
                             permitted_layers):
         """Recursively filter layers by permissions and replace group layers
         with permitted sublayers and return resulting layer list.
 
         :param list(str) requested_layers: List of requested layer names
-        :param str styles_param: Value of STYLES request parameter
+        :param list(requested_styles) requested_styles: Value of STYLES request parameter
         :param obj group_layers: Lookup for group layers with sublayers
         :param list(str) permitted_layers: List of permitted layer names
         """
         expanded_layers = []
 
-        requested_styles = []
-        if styles_param:
-            requested_styles = styles_param.split(',')
-
         for i, layer in enumerate(requested_layers):
             if layer in permitted_layers:
+                style = requested_styles[i] if i < len(requested_styles) else ''
                 if layer in group_layers:
                     # expand sublayers
                     sublayers = []
+                    sublayer_styles = []
                     for sublayer in group_layers.get(layer):
                         if sublayer in permitted_layers:
-                            sublayers.append({'layer': sublayer, 'style': ''})
-
+                            sublayers.append(sublayer)
+                            sublayer_styles.append(style)
                     expanded_layers += self.expand_group_layers(
-                        sublayers, styles_param, group_layers, permitted_layers
+                        sublayers, sublayer_styles, group_layers, permitted_layers
                     )
                 else:
-                    if i < len(requested_styles):
-                        style = requested_styles[i]
-                    else:
-                        style = ''
                     # leaf layer
                     expanded_layers.append({'layer': layer, 'style': style})
 
