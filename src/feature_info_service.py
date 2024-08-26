@@ -454,7 +454,7 @@ class FeatureInfoService():
                     attributes = list(filter(lambda entry: entry['name'] in keep_attrs, attributes))
 
             if geomcentroid and geometry:
-                gj = wkt.loads(geometry.upper())
+                gj = wkt.loads(geometry.upper().replace('Z',''))
                 geometry = wkt.dumps({
                     "type": "Point",
                     "coordinates": geom_center(gj["type"], gj["coordinates"])
