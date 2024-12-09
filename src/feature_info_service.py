@@ -114,6 +114,7 @@ class FeatureInfoService():
         self.transform_image_urls = config.get('transform_image_urls', True)
         self.skip_empty_attributes = config.get('skip_empty_attributes', False)
         self.use_permission_attribute_order = config.get('use_permission_attribute_order', False)
+        self.basic_auth_login_url = config.get('basic_auth_login_url')
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)

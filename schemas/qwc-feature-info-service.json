@@ -24,6 +24,13 @@
           "description": "Default HTML info template",
           "type": "string"
         },
+        "basic_auth_login_url": {
+          "description": "Login verification URL for requests with basic auth. Example: http://qwc-auth-service:9090/verify_login",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
         "default_info_template_path": {
           "description": "Default HTML info template path",
           "type": "string"
