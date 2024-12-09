@@ -179,9 +179,14 @@ class FeatureInfo(Resource):
         else:
             api.abort(404, "Either filter, filter_geom, or i and j, are required")
 
+        origin = request.origin
+        headers = request.headers
+        if not origin and headers.get("Host") and headers.get("X-Forwarded-Proto"):
+            origin = headers.get("X-Forwarded-Proto") + "://" + headers.get("Host")
+
         info_service = info_service_handler()
         result = info_service.query(
-            get_identity_or_auth(info_service), service_name, layers, params
+            get_identity_or_auth(info_service), origin, service_name, layers, params
         )
 
         return Response(

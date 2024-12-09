@@ -110,7 +110,7 @@ class FeatureInfoService():
         self.default_wms_url = config.get(
             'default_qgis_server_url', 'http://localhost:8001/ows/')
         self.data_service_url = config.get(
-            'data_service_url', '/api/v1/data/').rstrip('/') + '/'
+            'data_service_url', '/api/v1/data/').rstrip('/')
         self.transform_image_urls = config.get('transform_image_urls', True)
         self.skip_empty_attributes = config.get('skip_empty_attributes', False)
         self.use_permission_attribute_order = config.get('use_permission_attribute_order', False)
@@ -121,10 +121,11 @@ class FeatureInfoService():
 
         self.db_engine = DatabaseEngine()
 
-    def query(self, identity, service_name, layers, params):
+    def query(self, identity, origin, service_name, layers, params):
         """Query layers and return info result as XML.
 
         :param str identity: User identity
+        :param str origin: Request origin
         :param str service_name: Service name
         :param list(str): List of query layer names
         :param obj params: FeatureInfo service params
@@ -167,7 +168,7 @@ class FeatureInfoService():
         layer_infos = []
         for layer_style in expanded_layers:
             info = self.get_layer_info(
-                identity, service_name, layer_style['layer'], layer_style['style'], x, y, crs, dict(params)
+                identity, origin, service_name, layer_style['layer'], layer_style['style'], x, y, crs, dict(params)
             )
             if info is not None:
                 layer_infos.append(info)
@@ -228,10 +229,11 @@ class FeatureInfoService():
 
         return expanded_layers
 
-    def get_layer_info(self, identity, service_name, layer, style, x, y, crs, params):
+    def get_layer_info(self, identity, origin, service_name, layer, style, x, y, crs, params):
         """Get info for a layer rendered as info template.
 
         :param str identity: User identity
+        :param str origin: Request origin
         :param str service_name: Service name
         :param str layer: Layer name
         :param str style: Style name
@@ -426,6 +428,8 @@ class FeatureInfoService():
                 value = self.parse_value(attr.get('value'), json_aliases)
                 if isinstance(value, str) and value.startswith("attachment://"):
                     value = self.data_service_url + "/" + service_name + "." + layer + "/attachment?file=" + value[13:]
+                    if not value.startswith('http'):
+                        value = origin + value
                 alias = attribute_aliases.get(name, name)
                 info_feature.add(name, value, alias, json_aliases)
 
