@@ -425,7 +425,7 @@ class FeatureInfoService():
                 json_aliases = json_attribute_aliases.get(name)
                 value = self.parse_value(attr.get('value'), json_aliases)
                 if isinstance(value, str) and value.startswith("attachment://"):
-                    value = "attachment://" + self.data_service_url + "/" + service_name + "." + layer + "/attachment?file=" + value[13:]
+                    value = self.data_service_url + "/" + service_name + "." + layer + "/attachment?file=" + value[13:]
                 alias = attribute_aliases.get(name, name)
                 info_feature.add(name, value, alias, json_aliases)
 
@@ -581,11 +581,6 @@ class FeatureInfoService():
             rules.append((
                 r'^(mailto:)?([\w\-\.]+@([\w-]+\.)+[\w-]{2,63})$',
                 lambda m: m.expand(r'<a href="mailto:\2">\2</a>')
-            ))
-            # Attachments
-            rules.append((
-                r'^attachment://(.+)/([^/]+)$',
-                lambda m: m.expand(r'<a href="\1/\2" target="_blank"><img src="\1/\2" alt="\2" style="width: 100%" /></a>')
             ))
 
             for rule in rules:
