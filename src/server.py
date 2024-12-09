@@ -93,6 +93,7 @@ info_parser.add_argument('LAYERATTRIBS', default="", type=str)
 info_parser.add_argument('GEOMCENTROID', default="false", type=str)
 info_parser.add_argument('with_htmlcontent', default="true", type=str)
 info_parser.add_argument('with_bbox', default="true", type=str)
+info_parser.add_argument('info_format', default='text/xml', type=str)
 
 
 # routes
@@ -111,6 +112,7 @@ class FeatureInfo(Resource):
                'Can be specified instead of i and j.')
     @api.param('filter_geom', 'Filter geometry, as a WKT string. '
                'Can be specified instead of i and j.')
+    @api.param('info_format', 'Request format. Default: text/xml')
     @api.param('height', 'Height of map output, in pixels, e.g. `101`')
     @api.param('width', 'Width of map output, in pixels, e.g. `101`')
     @api.param('bbox', 'Bounding box for map extent, '

@@ -151,6 +151,7 @@ class FeatureInfoService():
 
         params['resolution'] = max(xres, yres)
         crs = params['crs']
+        output_info_format = params.get('info_format').lower()
 
         # filter layers by permissions and replace group layers
         # with permitted sublayers
@@ -171,11 +172,16 @@ class FeatureInfoService():
             if info is not None:
                 layer_infos.append(info)
 
-        info_xml = (
-            "<GetFeatureInfoResponse>%s</GetFeatureInfoResponse>" %
-            ''.join(layer_infos)
-        )
-        return info_xml
+        if output_info_format == 'text/html':
+            info_response = '<body><html>{layer_infos}</body></html>'.format(layer_infos="".join(layer_infos))
+        elif output_info_format == 'text/plain':
+            info_response = "".join(layer_infos)
+        else:
+            info_response = (
+                "<GetFeatureInfoResponse>%s</GetFeatureInfoResponse>" %
+                ''.join(layer_infos)
+            )
+        return info_response
 
     def service_exception(self, code, message):
         """Create ServiceExceptionReport XML
@@ -248,7 +254,8 @@ class FeatureInfoService():
 
         layerattribsfilter = params.get('LAYERATTRIBS', '')
         geomcentroid = params.get('GEOMCENTROID', "false").lower() in ["true", "1"]
-        with_htmlcontent = params.get('with_htmlcontent', "true").lower() in ["true", "1"]
+        output_info_format = params.get('info_format').lower()
+        with_htmlcontent = params.get('with_htmlcontent', "true").lower() in ["true", "1"] or output_info_format == 'text/html'
         with_bbox = params.get('with_bbox', "true").lower() in ["true", "1"]
 
         if 'LAYERATTRIBS' in params:
@@ -259,6 +266,9 @@ class FeatureInfoService():
             del params['with_htmlcontent']
         if 'with_bbox' in params:
             del params['with_bbox']
+        if 'info_format' in params:
+            # Internally we always need to request as text/xml
+            del params['info_format']
 
         # get layer permissions
         layer_permissions = self.layer_permissions(
@@ -393,10 +403,15 @@ class FeatureInfoService():
 
         if not info.get('features'):
             # info result is empty
-            return layer_template.render(
-                layer_name=layer, layer_title=layer_title,
-                parent_facade=parent_facade
-            )
+            if output_info_format == "text/plain":
+                return ""
+            elif output_info_format == "text/html":
+                return ""
+            else:
+                return layer_template.render(
+                    layer_name=layer, layer_title=layer_title,
+                    parent_facade=parent_facade
+                )
 
         template = info_template.get('template')
         template_dir = info_template.get('template_dir')
@@ -465,19 +480,32 @@ class FeatureInfoService():
             features.append({
                 'fid': fid,
                 'html_content': self.html_content(info_html) if with_htmlcontent else "",
+                'plain_html': info_html,
                 'bbox': bbox if with_bbox else None,
                 'wkt_geom': geometry,
                 'attributes': attributes
             })
 
-        # render layer template
-        return layer_template.render(
-            layer_name=layer, layer_title=layer_title, crs=crs,
-            features=features,
-            display_field=display_field,
-            feature_report=feature_report,
-            parent_facade=parent_facade
-        )
+        if output_info_format == 'text/plain':
+            output = ""
+            for feature in features:
+                output += "Feature: {fid}\n".format(fid=feature['fid'])
+                output += '\n'.join(map(lambda attr: "{alias}: {value}".format(alias=attr['alias'], value=attr['value']), feature['attributes'])) + '\n\n'
+            return "Layer: {layer_title}\n\n{output}\n\n\n".format(layer_title=layer_title, output=output)
+        elif output_info_format == 'text/html':
+            output = ""
+            for feature in features:
+                output += "<h2><i>Feature</i>: {fid}</h2>\n{plain_html}\n".format(fid=feature['fid'], plain_html=feature['plain_html'])
+            return "<h1><i>Layer</i>: {layer_title}</h1>\n{output}\n<br />\n".format(layer_title=layer_title, output=output)
+        else:
+            # render layer template
+            return layer_template.render(
+                layer_name=layer, layer_title=layer_title, crs=crs,
+                features=features,
+                display_field=display_field,
+                feature_report=feature_report,
+                parent_facade=parent_facade
+            )
 
     def parse_value(self, value, json_aliases):
         """Parse info result value and convert to dict or list if JSON.
