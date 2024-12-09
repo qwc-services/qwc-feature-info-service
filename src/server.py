@@ -1,9 +1,8 @@
 import locale
-import json
 import os
 import requests
 
-from flask import Flask, Response, jsonify, request
+from flask import Flask, Response, jsonify, json, request
 from flask_restx import Api, Resource, reqparse
 from jwt.exceptions import InvalidSignatureError
 
