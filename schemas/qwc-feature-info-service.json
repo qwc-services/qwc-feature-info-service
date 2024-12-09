@@ -21,43 +21,43 @@
       "type": "object",
       "properties": {
         "default_info_template": {
-          "description": "Default HTML info template",
+          "description": "Default HTML info template. Default: `null`",
           "type": "string"
         },
         "basic_auth_login_url": {
-          "description": "Login verification URL for requests with basic auth. Example: http://qwc-auth-service:9090/verify_login",
+          "description": "Login verification URL for requests with basic auth. Example: `http://qwc-auth-service:9090/verify_login`. Default: `null`",
           "type": "array",
           "items": {
             "type": "string"
           }
         },
         "default_info_template_path": {
-          "description": "Default HTML info template path",
+          "description": "Default HTML info template path. Default: `null`",
           "type": "string"
         },
         "default_info_template_base64": {
-          "description": "Default HTML info template in Base64 encoding",
+          "description": "Default HTML info template in Base64 encoding. Default: `null`",
           "type": "string",
           "contentEncoding": "base64"
         },
         "default_qgis_server_url": {
-          "description": "Default URL for WMS GetFeatureInfo queries",
+          "description": "Default URL for WMS GetFeatureInfo queries. Default: `http://localhost:8001/ows/`",
           "type": "string"
         },
         "data_service_url": {
-          "description": "Data service URL",
+          "description": "Data service URL (external) for constructing attachment urls. Default: `/api/v1/data/`",
           "type": "string"
         },
         "transform_image_urls": {
-          "description": "Transform image URLs to inline images",
+          "description": "Whether to transform image URLs to inline images. Default: `true`",
           "type": "boolean"
         },
         "skip_empty_attributes": {
-          "description": "Whether to skip empty feature attributes in WMS GetFeatureInfo responses (default: false)",
+          "description": "Whether to skip empty feature attributes in WMS GetFeatureInfo responses. Default: `false`",
           "type": "boolean"
         },
         "use_permission_attribute_order": {
-          "description": " Whether to order the attributes according to order of the permitted attribute names in WMS GetFeatureInfo responses, rather than the order returned by WMS GetFeatureInfo (default: false)",
+          "description": " Whether to order the attributes according to order of the permitted attribute names in WMS GetFeatureInfo responses, rather than the order returned by WMS GetFeatureInfo. Default: `false`",
           "type": "boolean"
         }
       }
@@ -242,7 +242,7 @@
           "const": "wms"
         },
         "wms_url": {
-          "description": "Custom WMS URL if different from default_qgis_server_url",
+          "description": "Custom WMS URL if different from `default_qgis_server_url`",
           "type": "string"
         },
         "template": {
