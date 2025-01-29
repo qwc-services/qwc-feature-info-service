@@ -241,6 +241,17 @@ Example:
 }
 ```
 
+### Basic Auth
+
+The feature info service be configured to accept password authentication using Basic authentication.
+
+Example:
+
+```json
+  "config": {
+    "basic_auth_login_url": ["http://qwc-auth-service:9090/verify_login"]
+  },
+```
 
 ## HTML template
 
