@@ -11,6 +11,7 @@ RUN \
     apt-get install -y libpq-dev g++ python3-dev && \
     uv sync --frozen && \
     apt-get purge -y libpq-dev g++ python3-dev && \
+    apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
