@@ -12,6 +12,7 @@ RUN \
     uv sync --frozen && \
     apt-get purge -y libpq-dev g++ python3-dev && \
     apt-get autoremove -y && \
+    apt-get install -y libpq5 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
