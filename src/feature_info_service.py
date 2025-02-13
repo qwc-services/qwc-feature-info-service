@@ -115,6 +115,7 @@ class FeatureInfoService():
         self.skip_empty_attributes = config.get('skip_empty_attributes', False)
         self.use_permission_attribute_order = config.get('use_permission_attribute_order', False)
         self.basic_auth_login_url = config.get('basic_auth_login_url')
+        self.info_templates_path = config.get('info_templates_path', '/info_templates/')
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
@@ -253,6 +254,29 @@ class FeatureInfoService():
         display_field = config.get('display_field')
         feature_report = config.get('feature_report')
         parent_facade = config.get('parent_facade')
+
+        # Autodetect info template (type wms)
+        if not info_template:
+            filename = os.path.join(service_name, layer + '.html')
+            try:
+                template_path = os.path.join(self.info_templates_path, filename)
+                self.logger.debug(
+                    "Looking for info template '%s' for layer '%s'..." % (template_path, layer)
+                )
+                with open(template_path, 'r') as fh:
+                    template = fh.read()
+                template_path = os.path.dirname(template_path)
+
+                info_template = {
+                    "type": "wms",
+                    "template": template,
+                    "template_path": template_path
+                }
+                self.logger.debug(
+                    "Found info template '%s' for layer '%s'..." % (template_path, layer)
+                )
+            except:
+                pass
 
         layerattribsfilter = params.get('LAYERATTRIBS', '')
         geomcentroid = params.get('GEOMCENTROID', "false").lower() in ["true", "1"]
@@ -456,6 +480,8 @@ class FeatureInfoService():
                     "TemplateSyntaxError on line %d: %s" % (e.lineno, e)
                 )
             except jinja2.TemplateError as e:
+                error_msg = "TemplateError: %s" % e
+            except Exception as e:
                 error_msg = "TemplateError: %s" % e
             if error_msg is not None:
                 self.logger.error(error_msg)
