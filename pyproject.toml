@@ -1,6 +1,6 @@
 [project]
 name = "qwc-feature-info-service"
-version = "v2025.02.10"
+version = "v2025.02.13"
 description = "QWC FeatureInfo Service"
 readme = "README.md"
 requires-python = ">=3.10"
