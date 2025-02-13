@@ -32,13 +32,17 @@
           }
         },
         "default_info_template_path": {
-          "description": "Default HTML info template path. Default: `null`",
+          "description": "Path to the default HTML info template. Default: `null`",
           "type": "string"
         },
         "default_info_template_base64": {
           "description": "Default HTML info template in Base64 encoding. Default: `null`",
           "type": "string",
           "contentEncoding": "base64"
+        },
+        "info_templates_path": {
+          "description": "Path where custom info templates are store. Default: `/info_templates/`",
+          "type": "string"
         },
         "default_qgis_server_url": {
           "description": "Default URL for WMS GetFeatureInfo queries. Default: `http://localhost:8001/ows/`",
