@@ -192,9 +192,10 @@ class FeatureInfo(Resource):
             get_identity_or_auth(info_service), origin, service_name, layers, params
         )
 
+        output_format = params.get('info_format', 'text/xml').lower()
         return Response(
             result,
-            content_type='text/xml; charset=utf-8',
+            content_type=output_format + '; charset=utf-8',
             status=200
         )
 
