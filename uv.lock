@@ -397,7 +397,7 @@ wheels = [
 
 [[package]]
 name = "qwc-feature-info-service"
-version = "2025.2.13"
+version = "2025.2.19"
 source = { virtual = "." }
 dependencies = [
     { name = "flask" },
