@@ -178,6 +178,29 @@ class FeatureInfoService():
             info_response = '<body><html>{layer_infos}</body></html>'.format(layer_infos="".join(layer_infos))
         elif output_info_format == 'text/plain':
             info_response = "".join(layer_infos)
+        elif output_info_format == 'application/json':
+            bbox = list(filter(lambda entry: entry and entry.get('bbox'), layer_infos))
+            if bbox:
+                bbox = bbox[0]['bbox']
+                for feature in layer_infos:
+                    if feature['bbox']:
+                        bbox = [
+                            min(feature['bbox'][0], bbox[0]),
+                            min(feature['bbox'][1], bbox[1]),
+                            max(feature['bbox'][2], bbox[2]),
+                            max(feature['bbox'][3], bbox[3])
+                        ]
+            else:
+                bbox = None
+            info_response = json.dumps({
+                "type": "FeatureCollection",
+                "bbox": bbox,
+                "crs":{
+                    "type": "name",
+                    "properties": {"name":"urn:ogc:def:crs:%s" % crs.replace(":", "::")}
+                },
+                "features": list(filter(bool, layer_infos))
+            })
         else:
             info_response = (
                 "<GetFeatureInfoResponse>%s</GetFeatureInfoResponse>" %
@@ -433,6 +456,8 @@ class FeatureInfoService():
                 return ""
             elif output_info_format == "text/html":
                 return ""
+            elif output_info_format == "application/json":
+                return None
             else:
                 return layer_template.render(
                     layer_name=layer, layer_title=layer_title,
@@ -527,6 +552,15 @@ class FeatureInfoService():
             for feature in features:
                 output += "<h2><i>Feature</i>: {fid}</h2>\n{plain_html}\n".format(fid=feature['fid'], plain_html=feature['plain_html'])
             return "<h1><i>Layer</i>: {layer_title}</h1>\n{output}\n<br />\n".format(layer_title=layer_title, output=output)
+        elif output_info_format == 'application/json':
+            return {
+                "type": "Feature",
+                "layerName": layer_title,
+                "id": fid,
+                "bbox": bbox,
+                "geometry": wkt.loads(geometry.upper().replace('Z','')),
+                "properties": dict(map(lambda entry: (entry['name'], entry['value']), attributes))
+            }
         else:
             # render layer template
             return layer_template.render(
