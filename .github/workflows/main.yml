@@ -18,7 +18,7 @@ jobs:
       - name: Start demo database
         run: |
           cd qwc-docker
-          cp pg_service-write.conf ~/.pg_service.conf
+          cp pg_service.conf ~/.pg_service.conf
           sed -i 's|host=qwc-postgis|host=localhost|g' ~/.pg_service.conf
           sed -i 's|port=5432|port=5439|g' ~/.pg_service.conf
           sed -i 's|qwc-qgis-server|localhost:8001|' volumes/config/default/featureInfoConfig.json
