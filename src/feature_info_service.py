@@ -558,7 +558,7 @@ class FeatureInfoService():
                 "layerName": layer_title,
                 "id": fid,
                 "bbox": bbox,
-                "geometry": wkt.loads(geometry.upper().replace('Z','')),
+                "geometry": wkt.loads(geometry.upper().replace('Z','')) if geometry else None,
                 "properties": dict(map(lambda entry: (entry['name'], entry['value']), attributes))
             }
         else:
