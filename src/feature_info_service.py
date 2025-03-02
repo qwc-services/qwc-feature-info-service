@@ -843,7 +843,7 @@ class FeatureInfoService():
                     else:
                         permitted_attributes.update(l.get('attributes', []))
                     info_template_permitted |= l.get('info_template', False)
-                    queryable |= l.get('queryable', True)
+                    queryable |= l.get('queryable', False)
                     break
 
         return {
