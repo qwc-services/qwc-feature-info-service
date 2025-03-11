@@ -7,6 +7,7 @@ import re
 import traceback
 from urllib.parse import urljoin
 from xml.dom.minidom import Document, Element, Text
+from xml.sax.saxutils import escape as xml_escape
 from geomet import wkt
 import locale
 
@@ -218,7 +219,7 @@ class FeatureInfoService():
             '<ServiceExceptionReport version="1.3.0">\n'
             ' <ServiceException code="%s">%s</ServiceException>\n'
             '</ServiceExceptionReport>'
-            % (code, message)
+            % (code, xml_escape(message))
         )
 
     def expand_group_layers(self, requested_layers, requested_styles, group_layers,
