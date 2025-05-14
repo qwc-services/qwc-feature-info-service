@@ -374,6 +374,7 @@ class FeatureInfoService():
         error_msg = None
 
         info_type = info_template.get('type')
+        self.logger.info("Info type for layer '%s' is '%s'" % (layer, info_type))
         if info_type == 'wms':
             # WMS GetFeatureInfo
             forward_auth_headers = False
