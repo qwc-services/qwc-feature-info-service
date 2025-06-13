@@ -82,8 +82,8 @@ info_parser.add_argument('j', type=int)
 info_parser.add_argument('bbox', type=str)
 info_parser.add_argument('filter', type=str)
 info_parser.add_argument('filter_geom', type=str)
-info_parser.add_argument('height', required=True, type=int)
-info_parser.add_argument('width', required=True, type=int)
+info_parser.add_argument('height', type=int)
+info_parser.add_argument('width', type=int)
 info_parser.add_argument('crs', required=True, type=str)
 info_parser.add_argument('feature_count', default=1, type=int)
 info_parser.add_argument('with_geometry', default="true", type=str)
@@ -170,17 +170,17 @@ class FeatureInfo(Resource):
 
         layers = params['layers'].split(',')
 
-        if 'filter' in params and params['filter']:
+        if params.get('filter'):
             # OK
             pass
-        elif 'filter_geom' in params and params['filter_geom']:
+        elif params.get('filter_geom'):
             # OK
             pass
-        elif 'i' in params and params['i'] and 'j' in params and params['j'] and 'bbox' in params and params['bbox']:
+        elif params.get('i') and params.get('j') and params.get('bbox') and params.get('width') and params.get('height'):
             # OK
             pass
         else:
-            api.abort(404, "Either filter, filter_geom, or i and j, are required")
+            api.abort(404, "Either filter, filter_geom, or (i, j, bbox, width, height), are required")
 
         origin = request.origin
         headers = request.headers

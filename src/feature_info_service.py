@@ -140,19 +140,20 @@ class FeatureInfoService():
             )
 
         # calculate query coordinates and resolutions
-        try:
-            bbox = list(map(float, params["bbox"].split(",")))
-            x = 0.5 * (bbox[0] + bbox[2])
-            y = 0.5 * (bbox[1] + bbox[3])
-            xres = (bbox[2] - bbox[0]) / params['width']
-            yres = (bbox[3] - bbox[1]) / params['height']
-        except Exception as e:
-            x = 0
-            y = 0
-            xres = 0
-            yres = 0
+        x = 0
+        y = 0
+        if params.get('bbox') and params.get('width') and params.get('height'):
+            try:
+                bbox = list(map(float, params["bbox"].split(",")))
+                x = 0.5 * (bbox[0] + bbox[2])
+                y = 0.5 * (bbox[1] + bbox[3])
+                xres = (bbox[2] - bbox[0]) / params['width']
+                yres = (bbox[3] - bbox[1]) / params['height']
+            except Exception as e:
+                xres = 0
+                yres = 0
+            params['resolution'] = max(xres, yres)
 
-        params['resolution'] = max(xres, yres)
         crs = params['crs']
         output_info_format = params.get('info_format').lower()
 
