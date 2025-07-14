@@ -110,6 +110,10 @@ class FeatureInfoService():
 
         self.default_wms_url = config.get(
             'default_qgis_server_url', 'http://localhost:8001/ows/')
+        qgis_server_url_tenant_suffix = config.get('qgis_server_url_tenant_suffix', '').strip('/')
+        if qgis_server_url_tenant_suffix:
+            self.default_wms_url += qgis_server_url_tenant_suffix + '/'
+
         self.data_service_url = config.get(
             'data_service_url', '/api/v1/data/').rstrip('/')
         self.transform_image_urls = config.get('transform_image_urls', True)

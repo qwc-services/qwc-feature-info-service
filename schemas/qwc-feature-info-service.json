@@ -48,6 +48,10 @@
           "description": "Default URL for WMS GetFeatureInfo queries. Default: `http://localhost:8001/ows/`",
           "type": "string"
         },
+        "qgis_server_url_tenant_suffix": {
+          "description": "If qgs_resources are placed in tenant specific subdirs, set this property to the respective subdir path portion. Default: `<empty>`",
+          "type": "string"
+        },
         "data_service_url": {
           "description": "Data service URL (external) for constructing attachment urls. Default: `/api/v1/data/`",
           "type": "string"
