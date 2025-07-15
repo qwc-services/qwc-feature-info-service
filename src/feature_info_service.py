@@ -173,9 +173,9 @@ class FeatureInfoService():
 
         # collect layer infos
         layer_infos = []
-        for layer_style in expanded_layers:
+        for entry in expanded_layers:
             info = self.get_layer_info(
-                identity, origin, service_name, layer_style['layer'], layer_style['style'], x, y, crs, dict(params)
+                identity, origin, service_name, entry['layer'], entry['style'], x, y, crs, dict(params)
             )
             if info is not None:
                 layer_infos.append(info)
