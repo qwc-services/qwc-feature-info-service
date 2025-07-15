@@ -121,16 +121,15 @@ def layer_info(layer, style, x, y, crs, params, identity, wms_url,
                                     'value': formatted_value(value, format, logger)
                                 })
                     else:
-                        # add info attributes if permitted, preserving featureinfo response order
+                        # add info attributes preserving featureinfo response order
                         for name in info_attributes:
-                            if name in permitted_attributes:
-                                format = attribute_formats.get(name)
-                                value = info_attributes.get(name)
+                            format = attribute_formats.get(name)
+                            value = info_attributes.get(name)
 
-                                attributes.append({
-                                    'name': name,
-                                    'value': formatted_value(value, format, logger)
-                                })
+                            attributes.append({
+                                'name': name,
+                                'value': formatted_value(value, format, logger)
+                            })
 
                     # parse bbox
                     for bboxEl in featureEl.getElementsByTagName('BoundingBox'):
