@@ -307,7 +307,10 @@ class FeatureInfoService():
             except:
                 pass
 
-        layerattribsfilter = params.get('LAYERATTRIBS', '')
+        layerattribsfilter = params.get('LAYERATTRIBS', None)
+        if layerattribsfilter:
+            layerattribsfilter = json.loads(layerattribsfilter)
+
         geomcentroid = params.get('GEOMCENTROID', "false").lower() in ["true", "1"]
         output_info_format = params.get('info_format').lower()
         with_htmlcontent = params.get('with_htmlcontent', "true").lower() in ["true", "1"] or output_info_format == 'text/html'
@@ -480,6 +483,13 @@ class FeatureInfoService():
             info_feature = InfoFeature()
             for attr in feature.get('attributes', []):
                 name = attr.get('name')
+
+                # filter attributes according to LAYERATTRIBS
+                if layerattribsfilter and layer in layerattribsfilter:
+                    keep_attrs = layerattribsfilter[layer]
+                    if name not in keep_attrs and name != display_field:
+                        continue
+
                 json_aliases = json_attribute_aliases.get(name)
                 value = self.parse_value(attr.get('value'), json_aliases)
                 if isinstance(value, str) and value.startswith("attachment://"):
@@ -522,15 +532,6 @@ class FeatureInfoService():
                     error_msg
                 )
 
-            attributes = info_feature._attributes
-            if layerattribsfilter:
-                filterobj = json.loads(layerattribsfilter)
-                if layer in filterobj:
-                    keep_attrs = filterobj[layer]
-                    if display_field:
-                        keep_attrs.append(display_field)
-                    attributes = list(filter(lambda entry: entry['name'] in keep_attrs, attributes))
-
             if geomcentroid and geometry:
                 gj = wkt.loads(geometry.upper().replace('Z',''))
                 geometry = wkt.dumps({
@@ -545,7 +546,7 @@ class FeatureInfoService():
                 'plain_html': info_html,
                 'bbox': bbox if with_bbox else None,
                 'wkt_geom': geometry,
-                'attributes': attributes
+                'attributes': info_feature._attributes
             })
 
         if output_info_format == 'text/plain':
