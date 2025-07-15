@@ -41,9 +41,7 @@ def layer_info(layer, style, x, y, crs, params, identity, wms_url,
 
     try:
         # reverse lookup for attribute names from alias
-        alias_attributes = {}
-        for name, alias in attribute_aliases.items():
-            alias_attributes[alias] = name
+        alias_attributes = dict([x[::-1] for x in attribute_aliases.items()])
 
         headers = {}
         if forward_auth_headers:
