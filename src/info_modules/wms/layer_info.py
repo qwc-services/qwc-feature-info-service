@@ -71,9 +71,10 @@ def layer_info(layer, style, x, y, crs, params, identity, wms_url,
             "Forward WMS GetFeatureInfo request to %s?%s" %
             (wms_url, urlencode(wms_params))
         )
+        network_timeout = config.get('network_timeout', 30)
 
         response = requests.get(
-            wms_url, params=wms_params, headers=headers, timeout=30
+            wms_url, params=wms_params, headers=headers, timeout=network_timeout
         )
 
         skip_empty_attributes = config.get('skip_empty_attributes', False)
