@@ -640,7 +640,7 @@ class FeatureInfoService():
             if self.transform_image_urls:
                 # Images
                 rules.append((
-                    r'^(https?:\/\/.*\.(jpg|jpeg|png|bmp))$',
+                    r'^(https?:\/\/.*\.(jpg|jpeg|png|bmp|svg))$',
                     lambda m: m.expand(r'<a href="\1" target="_blank"><img src="\1" /></a>')
                 ))
 
