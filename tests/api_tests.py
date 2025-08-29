@@ -49,5 +49,3 @@ class ApiTestCase(unittest.TestCase):
         features = layers[0].getElementsByTagName("Feature")
         self.assertEqual(len(features), 1)
         self.assertEqual(features[0].getAttribute("id"), "1")
-        htmlContents = features[0].getElementsByTagName("HtmlContent")
-        self.assertEqual(len(htmlContents), 1)

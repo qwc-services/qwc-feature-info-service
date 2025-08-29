@@ -20,7 +20,7 @@ from qwc_services_core.runtime_config import RuntimeConfig
 
 from info_modules.sql import layer_info as sql_layer_info
 from info_modules.wms import layer_info as wms_layer_info
-from info_templates import default_info_template, layer_template
+from info_templates import layer_template
 from utils import geom_center
 
 
@@ -87,6 +87,7 @@ class FeatureInfoService():
         config_handler = RuntimeConfig("featureInfo", logger)
         config = config_handler.tenant_config(tenant)
 
+        self.default_info_template = None
         self.default_info_template_dir = None
         if config.get('default_info_template'):
             self.default_info_template = config.get('default_info_template')
@@ -105,8 +106,6 @@ class FeatureInfoService():
                 config.get('default_info_template_base64'),
                 default_info_template, "default info template"
             )
-        else:
-            self.default_info_template = default_info_template
 
         self.default_wms_url = config.get(
             'default_qgis_server_url', 'http://localhost:8001/ows/')
@@ -504,33 +503,34 @@ class FeatureInfoService():
             geometry = feature.get('geometry')
 
             info_html = None
-            try:
-                # render feature template
-                templateLoader = None
-                if template_dir:
-                    templateLoader = jinja2.FileSystemLoader(searchpath=template_dir)
-                templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
-                feature_template = templateEnv.from_string(template)
-                info_html = feature_template.render(
-                    feature=info_feature, fid=fid, bbox=bbox,
-                    geometry=geometry, layer=layer, x=x, y=y, crs=crs,
-                    render_value=self.render_value,
-                    locale=locale
-                )
-            except jinja2.TemplateSyntaxError as e:
-                error_msg = (
-                    "TemplateSyntaxError on line %d: %s" % (e.lineno, e)
-                )
-            except jinja2.TemplateError as e:
-                error_msg = "TemplateError: %s" % e
-            except Exception as e:
-                error_msg = "TemplateError: %s" % e
-            if error_msg is not None:
-                self.logger.error(error_msg)
-                info_html = (
-                    '<span class="info_error" style="color: red">%s</span>' %
-                    error_msg
-                )
+            if template:
+                try:
+                    # render feature template
+                    templateLoader = None
+                    if template_dir:
+                        templateLoader = jinja2.FileSystemLoader(searchpath=template_dir)
+                    templateEnv = jinja2.Environment(loader=templateLoader, autoescape=True)
+                    feature_template = templateEnv.from_string(template)
+                    info_html = feature_template.render(
+                        feature=info_feature, fid=fid, bbox=bbox,
+                        geometry=geometry, layer=layer, x=x, y=y, crs=crs,
+                        render_value=self.render_value,
+                        locale=locale
+                    )
+                except jinja2.TemplateSyntaxError as e:
+                    error_msg = (
+                        "TemplateSyntaxError on line %d: %s" % (e.lineno, e)
+                    )
+                except jinja2.TemplateError as e:
+                    error_msg = "TemplateError: %s" % e
+                except Exception as e:
+                    error_msg = "TemplateError: %s" % e
+                if error_msg is not None:
+                    self.logger.error(error_msg)
+                    info_html = (
+                        '<span class="info_error" style="color: red">%s</span>' %
+                        error_msg
+                    )
 
             if geomcentroid and geometry:
                 gj = wkt.loads(geometry.upper().replace('Z',''))
@@ -542,7 +542,7 @@ class FeatureInfoService():
 
             features.append({
                 'fid': fid,
-                'html_content': self.html_content(info_html) if with_htmlcontent else "",
+                'html_content': self.html_content(info_html) if with_htmlcontent and info_html else "",
                 'plain_html': info_html,
                 'bbox': bbox if with_bbox else None,
                 'wkt_geom': geometry,
@@ -553,13 +553,19 @@ class FeatureInfoService():
             output = ""
             for feature in features:
                 output += "Feature: {fid}\n".format(fid=feature['fid'])
-                output += '\n'.join(map(lambda attr: "{alias}: {value}".format(alias=attr['alias'], value=attr['value']), feature['attributes'])) + '\n\n'
+                output += '\n'.join(map(lambda attr: f"{attr['alias']}: {attr['value']}", feature['attributes'])) + '\n\n'
             return "Layer: {layer_title}\n\n{output}\n\n\n".format(layer_title=layer_title, output=output)
         elif output_info_format == 'text/html':
             output = ""
             for feature in features:
-                output += "<h2><i>Feature</i>: {fid}</h2>\n{plain_html}\n".format(fid=feature['fid'], plain_html=feature['plain_html'])
-            return "<h1><i>Layer</i>: {layer_title}</h1>\n{output}\n<br />\n".format(layer_title=layer_title, output=output)
+                output += f"<h2><i>Feature</i>: {feature['fid']}</h2>\n"
+                if feature['plain_html']:
+                    output += f"{feature['plain_html']}\n"
+                else:
+                    output += "<table>\n"
+                    output += '\n'.join(map(lambda attr: f"<tr><td>{attr['alias']}</td><td>{attr['value']}</td></tr>", feature['attributes'])) + '\n'
+                    output += "</table>\n"
+            return f"<h1><i>Layer</i>: {layer_title}</h1>\n{output}\n<br />\n"
         elif output_info_format == 'application/json':
             return {
                 "type": "Feature",
