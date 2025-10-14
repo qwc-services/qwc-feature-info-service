@@ -1,5 +1,5 @@
 # Ubuntu image has locales, which we want e.g. for psql client_encoding or info formatting
-FROM sourcepole/qwc-uwsgi-base:ubuntu-v2025.01.24
+FROM sourcepole/qwc-uwsgi-base:ubuntu-v2025.10.13
 
 WORKDIR /srv/qwc_service
 ADD pyproject.toml uv.lock ./
