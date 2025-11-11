@@ -534,6 +534,10 @@ class FeatureInfoService():
 
             if geomcentroid and geometry:
                 gj = wkt.loads(geometry.upper().replace('Z',''))
+                if gj["type"] == "POINT" and len(gj["coordinates"]) == 3:
+                    gj["coordinates"] = gj["coordinates"][:2]
+                if gj["type"] == "MULTIPOINT" and len(gj["coordinates"][0])==3:
+                    for i, c in enumerate(gj["coordinates"]): gj["coordinates"][i] = c[:2]
                 geometry = wkt.dumps({
                     "type": "Point",
                     "coordinates": geom_center(gj["type"], gj["coordinates"])
