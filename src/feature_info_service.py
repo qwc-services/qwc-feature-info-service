@@ -536,7 +536,7 @@ class FeatureInfoService():
                 gj = wkt.loads(geometry.upper().replace('Z',''))
                 geometry = wkt.dumps({
                     "type": "Point",
-                    "coordinates": geom_center(gj["type"], gj["coordinates"])
+                    "coordinates": geom_center(gj["type"], gj["coordinates"])[0:2]
                 })
                 bbox = None
 
