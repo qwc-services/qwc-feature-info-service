@@ -1,15 +1,16 @@
-from collections import OrderedDict
-import re
 import os
+import re
+import requests
 import time
 import traceback
-from datetime import datetime, date
-from urllib.parse import urlencode
 
+from collections import OrderedDict
+from datetime import datetime, date
 from flask import json
 from flask_jwt_extended import create_access_token
-import requests
+from qwc_services_core.auth import get_username
 from xml.dom.minidom import parseString
+from urllib.parse import urlencode
 
 
 THROTTLE_LAYERS = os.environ.get('THROTTLE_LAYERS', '').split(',')
@@ -63,6 +64,15 @@ def layer_info(layer, style, x, y, crs, params, identity, wms_url,
             'query_layers': layer
         })
 
+        # Inject identity parameter if configured
+        qgis_server_identity_parameter = config['qgis_server_identity_parameter']
+        if qgis_server_identity_parameter is not None:
+            parameter_name = qgis_server_identity_parameter.upper()
+            if identity:
+                wms_params[parameter_name] = get_username(identity)
+            elif parameter_name in params:
+                del wms_params[parameter_name]
+
         if layer in THROTTLE_LAYERS:
             logger.info("Defer layer %s for %fs" % (layer, THROTTLE_TIME))
             time.sleep(THROTTLE_TIME)
@@ -77,8 +87,8 @@ def layer_info(layer, style, x, y, crs, params, identity, wms_url,
             wms_url, params=wms_params, headers=headers, timeout=network_timeout
         )
 
-        skip_empty_attributes = config.get('skip_empty_attributes', False)
-        use_permission_attribute_order = config.get('use_permission_attribute_order', False)
+        skip_empty_attributes = config['skip_empty_attributes']
+        use_permission_attribute_order = config['use_permission_attribute_order']
 
         # parse GetFeatureInfo response
         document = parseString(response.content.decode())

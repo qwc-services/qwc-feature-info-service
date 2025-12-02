@@ -120,6 +120,7 @@ class FeatureInfoService():
         self.use_permission_attribute_order = config.get('use_permission_attribute_order', False)
         self.basic_auth_login_url = config.get('basic_auth_login_url')
         self.info_templates_path = config.get('info_templates_path', '/info_templates/')
+        self.qgis_server_identity_parameter = config.get("qgis_server_identity_parameter", "QWC_USERNAME")
 
         self.resources = self.load_resources(config)
         self.permissions_handler = PermissionsReader(tenant, logger)
@@ -394,7 +395,8 @@ class FeatureInfoService():
                 forward_auth_headers = True
             wms_module_config = {
                 "skip_empty_attributes": self.skip_empty_attributes,
-                "use_permission_attribute_order": self.use_permission_attribute_order
+                "use_permission_attribute_order": self.use_permission_attribute_order,
+                "qgis_server_identity_parameter": self.qgis_server_identity_parameter
             }
             info = wms_layer_info(
                 layer, style, x, y, crs, params, identity, wms_url,

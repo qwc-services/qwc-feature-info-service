@@ -71,6 +71,10 @@
         "use_permission_attribute_order": {
           "description": " Whether to order the attributes according to order of the permitted attribute names in WMS GetFeatureInfo responses, rather than the order returned by WMS GetFeatureInfo. Default: `false`",
           "type": "boolean"
+        },
+        "qgis_server_identity_parameter": {
+          "description": "Name of the GET parameter through which the active QWC user will be sent to QGIS Server, to be used i.e. in plugins. Default: `QWC_USERNAME`",
+          "type": "string"
         }
       }
     },
