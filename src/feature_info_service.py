@@ -11,7 +11,7 @@ from xml.sax.saxutils import escape as xml_escape
 from geomet import wkt
 import locale
 
-from flask import json
+from flask import json, request
 import jinja2
 
 from qwc_services_core.database import DatabaseEngine
@@ -517,7 +517,7 @@ class FeatureInfoService():
                         feature=info_feature, fid=fid, bbox=bbox,
                         geometry=geometry, layer=layer, x=x, y=y, crs=crs,
                         render_value=self.render_value,
-                        locale=locale
+                        locale=locale, request=request
                     )
                 except jinja2.TemplateSyntaxError as e:
                     error_msg = (

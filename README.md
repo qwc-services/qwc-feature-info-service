@@ -273,7 +273,7 @@ The following values are available in the template:
 * `geometry`: Feature geometry as WKT (if present)
 * `layer`: Layer name
 
-To automatically detect hyperlinks in values and replace them as HTML links the following helper can be used in the template:
+To automatically detect hyperlinks in values and replace them as HTML links as well as transform image URLs to inline images the following helper can be used in the template:
 
     render_value(value)
 
@@ -289,6 +289,10 @@ Example:
         <tr>
             <td>Description:</td>
             <td>{{ feature.description }}</td>
+        </tr>
+        <tr>
+            <td>Link:</td>
+            <td>{{ render_value(feature.link) }}</td>
         </tr>
     </table>
 ```
@@ -420,6 +424,7 @@ In a DB Query the following values are replaced in the SQL:
 * `:feature_count`: Max feature count
 * `:with_geometry`: Whether to return geometries in response (default=1)
 * `:with_maptip`: Whether to return maptip in response (default=1)
+* `:geom`: The `filter_geom` passed to the `GetFeatureInfo` request, if any, otherwise `POINT(x y)`
 
 The query may return the feature ID as `_fid_` and the WKT geometry as `wkt_geom`. All other selected columns are used as feature attributes.
 
