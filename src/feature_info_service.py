@@ -334,6 +334,7 @@ class FeatureInfoService():
         )
 
         if not layer_permissions['queryable']:
+            self.logger.debug("Layer %s is not queryable" % layer)
             # layer is not queryable
             return None
 
