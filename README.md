@@ -16,39 +16,13 @@ Layer info providers:
 
 The info results are each rendered into customizable HTML templates and returned as a GetFeatureInfoResponse XML.
 
-
-Setup
------
-
-The DB query uses a PostgreSQL connection service or connection to a PostGIS database.
-This connection's user requires read access to the configured tables.
-
-### qwc_demo example
-
-Uses PostgreSQL connection service `qwc_geodb` (GeoDB).
-The user `qwc_service` requires read access to the configured tables
-of the data layers from the QGIS project `qwc_demo.qgs`.
-
-Setup PostgreSQL connection service file `~/.pg_service.conf`:
-
-```
-[qwc_geodb]
-host=localhost
-port=5439
-dbname=qwc_demo
-user=qwc_service
-password=qwc_service
-sslmode=disable
-```
-
-
 Configuration
 -------------
 
 The static config and permission files are stored as JSON files in `$CONFIG_PATH` with subdirectories for each tenant,
 e.g. `$CONFIG_PATH/default/*.json`. The default tenant name is `default`.
 
-### FeatureInfo Service config
+### JSON config
 
 * [JSON schema](schemas/qwc-feature-info-service.json)
 * File location: `$CONFIG_PATH/<tenant>/featureInfoConfig.json`
@@ -132,6 +106,8 @@ Example:
 }
 ```
 
+See the [schema definition](schemas/qwc-feature-info-service.json) for the full set of supported config variables.
+
 Example `info_template` for WMS GetFeatureInfo:
 ```json
 "info_template": {
@@ -170,10 +146,7 @@ Example `info_template` for Custom info module:
 }
 ```
 
-
-#### Base64 encoded properties
-
-The following config properties may also be set as Base64 encoded values instead:
+*Note*: The following config properties may also be set as Base64 encoded values instead:
 
 * Default HTML info template: `default_info_template_base64`
 * Formatting expression for converting attribute values: `format_base64`
@@ -182,6 +155,15 @@ The following config properties may also be set as Base64 encoded values instead
 
 Any plain text properties take precedence over their corresponding Base64 encoded property (e.g. `template_base64` is only used if `template` is not set).
 
+### Environment variables
+
+Config options in the config file can be overridden by equivalent uppercase environment variables.
+
+In addition, the following environment variables are supported:
+
+| Name                         | Default       | Description                                                                               |
+|------------------------------|---------------|-------------------------------------------------------------------------------------------|
+| `LANG`                       | `C`           | Set locale Admin GUI language (see [src/translations](src/translations) for available languages).    |
 
 ### Permissions
 
@@ -272,10 +254,9 @@ The following values are available in the template:
 * `bbox`: Feature bounding box as `[<minx>, <miny>, <maxx>, <maxy>]` (if present)
 * `geometry`: Feature geometry as WKT (if present)
 * `layer`: Layer name
-
-To automatically detect hyperlinks in values and replace them as HTML links as well as transform image URLs to inline images the following helper can be used in the template:
-
-    render_value(value)
+* `render_value`: Function which detects special value formats and renders them accordingly (i.e. hyperlinks and image URLs)
+* `locale`: The [Locale module](https://docs.python.org/3/library/locale.html), allows i.e. locale aware number formatting
+* `request`: The original request, useful for extracting i.e. request origin etc.
 
 Example:
 
@@ -300,8 +281,8 @@ Example:
 
 ### Default info template
 
-Layers with no assigned info templates use WMS GetFeatureInfo with a default info template.
-The default template can also optionally be configured as `default_info_template` in the config file.
+A default info template can provided via `default_info_template` in the config file.
+It will be used for all layers with no assigned info templates.
 
 The InfoFeature `feature` available in the template also provides a list of its attributes:
 
@@ -315,96 +296,8 @@ The InfoFeature `feature` available in the template also provides a list of its 
 
 If an attribute value starts with `{` or `[` the service tries to parse it as JSON before rendering it in the template.
 
-Default info template:
 
-```xml
-    <table class="attribute-list">
-        <tbody>
-        {% for attr in feature._attributes -%}
-            {% if attr['type'] == 'list' -%}
-                {# attribute is a list #}
-                <tr>
-                    <td class="identify-attr-title wrap"><i>{{ attr['alias'] }}</i></td>
-                    <td>
-                        <table class="identify-attr-subtable">
-                            <tbody>
-                            {%- for item in attr['value'] %}
-                                    {%- if item is mapping -%}
-                                        {# item is a dict #}
-                                        {% for key in item -%}
-                                            {% if not attr['json_aliases'] %}
-                                                {% set alias = key %}
-                                            {% elif key in attr['json_aliases'] %}
-                                                {% set alias = attr['json_aliases'][key] %}
-                                            {% endif %}
-                                            {% if alias %}
-                                                <tr>
-                                                    <td class="identify-attr-title wrap">
-                                                        <i>{{ alias }}</i>
-                                                    </td>
-                                                    <td class="identify-attr-value wrap">
-                                                        {{ render_value(item[key]) }}
-                                                    </td>
-                                                </tr>
-                                            {% endif %}
-                                        {%- endfor %}
-                                    {%- else -%}
-                                        <tr>
-                                            <td class="identify-attr-value identify-attr-single-value wrap" colspan="2">
-                                                {{ render_value(item) }}
-                                            </td>
-                                        </tr>
-                                    {%- endif %}
-                                    <tr>
-                                        <td class="identify-attr-spacer" colspan="2"></td>
-                                    </tr>
-                            {%- endfor %}
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-
-            {%- elif attr['type'] in ['dict', 'OrderedDict'] -%}
-                {# attribute is a dict #}
-                <tr>
-                    <td class="identify-attr-title wrap"><i>{{ attr['alias'] }}</i></td>
-                    <td>
-                        <table class="identify-attr-subtable">
-                            <tbody>
-                            {% for key in attr['value'] -%}
-                                <tr>
-                                    <td class="identify-attr-title wrap">
-                                        <i>{{ key }}</i>
-                                    </td>
-                                    <td class="identify-attr-value wrap">
-                                        {{ render_value(attr['value'][key]) }}
-                                    </td>
-                                </tr>
-                            {%- endfor %}
-                            </tbody>
-                        </table>
-                    </td>
-                </tr>
-
-            {%- else -%}
-                {# other attributes #}
-                <tr>
-                    <td class="identify-attr-title wrap">
-                        <i>{{ attr['alias'] }}</i>
-                    </td>
-                    <td class="identify-attr-value wrap">
-                        {{ render_value(attr['value']) }}
-                    </td>
-                </tr>
-            {%- endif %}
-        {%- endfor %}
-        </tbody>
-    </table>
-```
-
-
-DB Query
---------
+## DB Query
 
 In a DB Query the following values are replaced in the SQL:
 
@@ -453,8 +346,7 @@ Sample queries:
 ```
 
 
-Custom info modules
--------------------
+## Custom info modules
 
 Custom info modules can be placed in `./info_modules/custom/<module name>/` and must provide the following method:
 ```python
@@ -514,37 +406,27 @@ See [`./info_modules/custom/example/`](info_modules/custom/example/) for a sampl
 
 The custom info module can then be referenced in the `info_template` by its name (= directory name) in the service config.
 
+Run locally
+-----------
 
-Usage
------
+Install dependencies and run:
 
-Set the `CONFIG_PATH` environment variable to the path containing the service config and permission files when starting this service (default: `config`).
+    export CONFIG_PATH=<CONFIG_PATH>
+    uv run src/server.py
 
-Base URL:
+To use configs from a `qwc-docker` setup, set `CONFIG_PATH=<...>/qwc-docker/volumes/config`.
 
-    http://localhost:5015/
+Set `FLASK_DEBUG=1` for additional debug output.
 
-Service API:
+Set `FLASK_RUN_PORT=<port>` to change the default port (default: `5000`).
 
-    http://localhost:5015/api/
+API documentation:
 
-Sample request:
-
-    curl 'http://localhost:5015/qwc_demo?layers=countries,edit_points&i=51&j=51&height=101&width=101&bbox=671639%2C5694018%2C1244689%2C6267068&crs=EPSG%3A3857'
+    http://localhost:$FLASK_RUN_PORT/api/
 
 Docker usage
 ------------
 
+The Docker image is published on [Dockerhub](https://hub.docker.com/r/sourcepole/qwc-feature-info-service).
+
 See sample [docker-compose.yml](https://github.com/qwc-services/qwc-docker/blob/master/docker-compose-example.yml) of [qwc-docker](https://github.com/qwc-services/qwc-docker).
-
-
-Development
------------
-
-Install dependencies and run service:
-
-    uv run src/server.py
-
-With config path:
-
-    CONFIG_PATH=/PATH/TO/CONFIGS/ uv run src/server.py
