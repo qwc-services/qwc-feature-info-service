@@ -14,7 +14,6 @@ from urllib.parse import urlencode
 
 
 THROTTLE_LAYERS = os.environ.get('THROTTLE_LAYERS', '').split(',')
-USE_PERMISSION_ATTRIBUTE_ORDER = os.environ.get('USE_PERMISSION_ATTRIBUTE_ORDER', '0') not in [0, "0", "False", "FALSE"]
 THROTTLE_TIME = 1.5
 
 
