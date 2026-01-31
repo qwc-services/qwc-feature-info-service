@@ -585,7 +585,8 @@ class FeatureInfoService():
                 features=features,
                 display_field=display_field,
                 feature_report=feature_report,
-                parent_facade=parent_facade
+                parent_facade=parent_facade,
+                render_value=self.render_value
             )
 
     def parse_value(self, value, json_aliases):
@@ -629,7 +630,7 @@ class FeatureInfoService():
 
         return value
 
-    def render_value(self, value, htmlEscape=True):
+    def render_value(self, value, attr=None):
         """Escape HTML special characters if requested, and detect
         special value formats in info result values and reformat them.
 
@@ -641,8 +642,6 @@ class FeatureInfoService():
             if value.startswith("<") and value.find(">") != -1 and re.match("<(\"[^\"]*\"|'[^']*'|[^'\">])*>", value[0:value.find(">") + 1]):
                 return value
 
-            if htmlEscape:
-                value = html.escape(value)
             value = value.replace("\n", "<br />")
             rules = []
 
@@ -670,7 +669,37 @@ class FeatureInfoService():
                     value = rule[1](match)
                     break
 
-        return value
+            return value
+
+        elif isinstance(value, list):
+            result = '<table class="identify-attr-subtable"><tbody>'
+            for item in value:
+                if isinstance(item, dict):
+                    for key in item:
+                        alias = attr['json_aliases'].get(key, key) if attr and attr.get('json_aliases') else key
+                        result += '<tr>' + \
+                            f'<td class="identify-attr-title-wrap"><i>{html.escape(alias)}</i></td>' + \
+                            f'<td class="identify-attr-value wrap">{self.render_value(item[key])}</td>' + \
+                            '</tr>'
+                else:
+                    result += '<tr>' + \
+                        f'<td class="identify-attr-value identify-attr-single-value wrap" colspan="2">{self.render_value(item)}</td>' + \
+                        '</tr>'
+                result += '<tr><td class="identify-attr-spacer" colspan="2"></td></tr>'
+
+            result += '</tbody></table>'
+            return result
+
+        elif isinstance(value, dict):
+            result = '<table class="identify-attr-subtable"><tbody>'
+            for key in value:
+                alias = attr['json_aliases'].get(key, key) if attr else key
+                result += '<tr>' + \
+                    f'<td class="identify-attr-title-wrap"><i>{html.escape(alias)}</i></td>' + \
+                    f'<td class="identify-attr-value wrap">{self.render_value(item[key])}</td>' + \
+                    '</tr>'
+            result += '</tbody></table>'
+            return result
 
     def html_content(self, info_html):
         """Return <HtmlContent> tag with escaped HTML.
