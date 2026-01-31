@@ -21,7 +21,7 @@ layer_template = Template("""
                 type="derived" />
             {%- endif %}
             {% for attr in feature.attributes %}
-            <Attribute name="{{ attr['alias']|e }}" value="{{ attr['value']|e }}" attrname="{{ attr['name'] }}" />
+                <Attribute name="{{ attr['alias']|e }}" value="{{ render_value(attr['value'], attr)|e }}" attrname="{{ attr['name']|e }}" />
             {%- endfor %}
         </Feature>
         {% endfor -%}
