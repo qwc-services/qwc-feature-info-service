@@ -144,10 +144,10 @@ def layer_info(layer, style, x, y, crs, params, identity, wms_url,
                     # parse bbox
                     for bboxEl in featureEl.getElementsByTagName('BoundingBox'):
                         bbox = [
-                            bboxEl.getAttribute('minx'),
-                            bboxEl.getAttribute('miny'),
-                            bboxEl.getAttribute('maxx'),
-                            bboxEl.getAttribute('maxy')
+                            float(bboxEl.getAttribute('minx')),
+                            float(bboxEl.getAttribute('miny')),
+                            float(bboxEl.getAttribute('maxx')),
+                            float(bboxEl.getAttribute('maxy'))
                         ]
                     if attributes:
                         features.append({
