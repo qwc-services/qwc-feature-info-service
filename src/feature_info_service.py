@@ -576,7 +576,7 @@ class FeatureInfoService():
                 "id": fid,
                 "bbox": bbox,
                 "geometry": wkt.loads(geometry.upper().replace('Z','')) if geometry else None,
-                "properties": dict(map(lambda entry: (entry['name'], entry['value']), attributes))
+                "properties": dict(map(lambda entry: (entry['name'], entry['value']), feature['attributes']))
             }
         else:
             # render layer template
