@@ -185,17 +185,17 @@ class FeatureInfoService():
         elif output_info_format == 'text/plain':
             info_response = "".join(layer_infos)
         elif output_info_format == 'application/json':
-            bbox = list(filter(lambda entry: entry and entry.get('bbox'), layer_infos))
-            if bbox:
-                bbox = bbox[0]['bbox']
-                for feature in layer_infos:
-                    if feature['bbox']:
-                        bbox = [
-                            min(feature['bbox'][0], bbox[0]),
-                            min(feature['bbox'][1], bbox[1]),
-                            max(feature['bbox'][2], bbox[2]),
-                            max(feature['bbox'][3], bbox[3])
-                        ]
+            features = [item for sublist in layer_infos for item in sublist]
+            bboxes = [feature['bbox'] for feature in features if feature.get('bbox')]
+            if bboxes:
+                bbox = bboxes[0]
+                for bb in bboxes:
+                    bbox = [
+                        min(bb[0], bbox[0]),
+                        min(bb[1], bbox[1]),
+                        max(bb[2], bbox[2]),
+                        max(bb[3], bbox[3])
+                    ]
             else:
                 bbox = None
             info_response = json.dumps({
@@ -205,7 +205,7 @@ class FeatureInfoService():
                     "type": "name",
                     "properties": {"name":"urn:ogc:def:crs:%s" % crs.replace(":", "::")}
                 },
-                "features": list(filter(bool, layer_infos))
+                "features": features
             })
         else:
             info_response = (
@@ -570,14 +570,17 @@ class FeatureInfoService():
                     output += "</table>\n"
             return f"<h1><i>Layer</i>: {layer_title}</h1>\n{output}\n<br />\n"
         elif output_info_format == 'application/json':
-            return {
-                "type": "Feature",
-                "layerName": layer_title,
-                "id": fid,
-                "bbox": bbox,
-                "geometry": wkt.loads(geometry.upper().replace('Z','')) if geometry else None,
-                "properties": dict(map(lambda entry: (entry['name'], entry['value']), feature['attributes']))
-            }
+            output = []
+            for feature in features:
+                output.append({
+                    "type": "Feature",
+                    "layerName": layer_title,
+                    "id": feature['fid'],
+                    "bbox": feature['bbox'],
+                    "geometry": wkt.loads(feature['wkt_geom'].upper().replace('Z','')) if feature['wkt_geom'] else None,
+                    "properties": dict(map(lambda entry: (entry['name'], entry['value']), feature['attributes']))
+                })
+            return output
         else:
             # render layer template
             return layer_template.render(
