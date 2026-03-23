@@ -699,7 +699,7 @@ class FeatureInfoService():
                 alias = attr['json_aliases'].get(key, key) if attr and attr.get('json_aliases') else key
                 result += '<tr>' + \
                     f'<td class="identify-attr-title-wrap"><i>{html.escape(alias)}</i></td>' + \
-                    f'<td class="identify-attr-value wrap">{self.render_value(item[key])}</td>' + \
+                    f'<td class="identify-attr-value wrap">{self.render_value(value[key])}</td>' + \
                     '</tr>'
             result += '</tbody></table>'
             return result
