@@ -3,11 +3,11 @@ import os
 import requests
 
 from flask import Flask, Response, jsonify, json, request
-from flask_restx import Api, Resource, reqparse
+from flask_restx import Resource, reqparse
 from jwt.exceptions import InvalidSignatureError
 
+from qwc_services_core.api import Api, CaseInsensitiveArgument
 from qwc_services_core.auth import auth_manager, optional_auth, get_identity
-from qwc_services_core.api import CaseInsensitiveArgument
 from qwc_services_core.tenant_handler import (
     TenantHandler, TenantPrefixMiddleware, TenantSessionInterface)
 from feature_info_service import FeatureInfoService
