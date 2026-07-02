@@ -703,6 +703,8 @@ class FeatureInfoService():
                     '</tr>'
             result += '</tbody></table>'
             return result
+        else:
+            return value
 
     def html_content(self, info_html):
         """Return <HtmlContent> tag with escaped HTML.
