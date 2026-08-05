@@ -1,5 +1,6 @@
 # Ubuntu image has locales, which we want e.g. for psql client_encoding or info formatting
-FROM sourcepole/qwc-uwsgi-base:ubuntu-v2026.01.06
+ARG BASE_TAG=latest
+FROM sourcepole/qwc-uwsgi-base:ubuntu-$BASE_TAG
 
 WORKDIR /srv/qwc_service
 ADD pyproject.toml uv.lock ./
