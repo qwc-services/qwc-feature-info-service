@@ -1,6 +1,8 @@
 [![](https://github.com/qwc-services/qwc-feature-info-service/workflows/build/badge.svg)](https://github.com/qwc-services/qwc-feature-info-service/actions)
 [![docker](https://img.shields.io/docker/v/sourcepole/qwc-feature-info-service?label=Docker%20image&sort=semver)](https://hub.docker.com/r/sourcepole/qwc-feature-info-service)
 
+# Starting from qwc-ogc-service:v2026.10.23, this repository is obsolete, the qwc-feature-info-service functionality has been merged into the [qwc-ogc-service](https://github.com/qwc-services/qwc-ogc-service).
+
 QWC FeatureInfo Service
 =======================
 
