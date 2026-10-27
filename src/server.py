@@ -13,6 +13,8 @@ from qwc_services_core.tenant_handler import (
 from feature_info_service import FeatureInfoService
 
 
+WITH_HTMLCONTENT_DEFAULT = os.getenv("WITH_HTMLCONTENT_DEFAULT", "true").lower()
+
 # set locale for value formatting
 locale.setlocale(locale.LC_ALL, os.environ.get('LANG', 'C'))
 
@@ -93,7 +95,7 @@ info_parser.add_argument('FI_LINE_TOLERANCE', default=8, type=int)
 info_parser.add_argument('FI_POLYGON_TOLERANCE', default=4, type=int)
 info_parser.add_argument('LAYERATTRIBS', default="", type=str)
 info_parser.add_argument('GEOMCENTROID', default="false", type=str)
-info_parser.add_argument('with_htmlcontent', default="true", type=str)
+info_parser.add_argument('with_htmlcontent', default=WITH_HTMLCONTENT_DEFAULT, type=str)
 info_parser.add_argument('with_bbox', default="true", type=str)
 info_parser.add_argument('info_format', default='text/xml', type=str)
 
